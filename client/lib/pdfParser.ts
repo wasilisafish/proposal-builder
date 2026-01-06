@@ -1,7 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
-// Set up worker for pdf.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Set up worker for pdf.js using local file
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export interface ExtractedInsuranceData {
   policyStartDate?: string;
