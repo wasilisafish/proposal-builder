@@ -1,10 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Disable worker - use inline parsing instead
-// This avoids cross-origin issues with CDN worker files
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = null;
-}
+// Note: Don't set workerSrc - let pdf.js use its built-in fallback for inline parsing
+// Setting workerSrc to invalid values causes errors, so we skip the setup entirely
 
 export interface ExtractedInsuranceData {
   policyStartDate?: string;
