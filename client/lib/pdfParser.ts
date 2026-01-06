@@ -28,40 +28,28 @@ async function setupPDFWorker() {
     `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`,
   ];
 
+  // Try to set the worker source using direct CDN URLs
+  // PDF.js will fetch these URLs as needed
   for (const cdnUrl of cdnUrls) {
     try {
-      const response = await fetch(cdnUrl, {
-        method: 'GET',
-        mode: 'cors',
-      });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch from ${cdnUrl}: ${response.statusText}`);
-        continue;
+      // Validate the URL is accessible before setting it
+      const response = await fetch(cdnUrl, { method: 'HEAD', mode: 'cors' });
+      if (response.ok) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = cdnUrl;
+        console.log(`PDF worker configured with CDN URL: ${cdnUrl}`);
+        return;
       }
-
-      const workerCode = await response.text();
-      if (!workerCode) {
-        console.warn(`Empty worker code from ${cdnUrl}`);
-        continue;
-      }
-
-      const blob = new Blob([workerCode], { type: 'application/javascript' });
-      const blobUrl = URL.createObjectURL(blob);
-      pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
-      console.log(`PDF worker configured successfully from ${cdnUrl}`);
-      return;
     } catch (error) {
-      console.warn(`Failed to set up worker from ${cdnUrl}:`, error);
+      console.warn(`Failed to validate CDN URL ${cdnUrl}:`, error);
       continue;
     }
   }
 
-  // If all CDNs fail, try inline worker approach
+  // If we couldn't validate any CDN, just set the first one and hope it works
+  const defaultUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
   try {
-    // Use the unpkg URL directly without blob conversion
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-    console.log('PDF worker configured with direct CDN URL');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = defaultUrl;
+    console.log('PDF worker configured with default CDN URL (unverified)');
   } catch (error) {
     throw new Error(`Could not initialize PDF worker: ${error instanceof Error ? error.message : String(error)}`);
   }
