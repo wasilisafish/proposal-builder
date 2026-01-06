@@ -1,4 +1,32 @@
+import { useEffect, useRef } from 'react';
+
 export default function Index() {
+  const stickyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!stickyRef.current) return;
+
+      const stickyElement = stickyRef.current;
+      const rect = stickyElement.getBoundingClientRect();
+
+      // If the sticky element is above the viewport, make it fixed
+      if (rect.top < window.innerHeight - 100) {
+        stickyElement.style.position = 'fixed';
+        stickyElement.style.bottom = '0';
+        stickyElement.style.left = '0';
+        stickyElement.style.right = '0';
+        stickyElement.style.width = '100%';
+      } else {
+        // Otherwise, let it be sticky normally
+        stickyElement.style.position = 'sticky';
+        stickyElement.style.bottom = '0';
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
