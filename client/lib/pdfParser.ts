@@ -1,30 +1,69 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Fetch and set up worker as a blob URL to avoid CORS issues
-async function setupPDFWorker() {
-  if (typeof window === 'undefined' || pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    return; // Already set up or not in browser
+let workerSetupPromise: Promise<void> | null = null;
+
+// Initialize worker with multiple fallback CDNs
+function initializeWorkerSetup(): Promise<void> {
+  if (workerSetupPromise) {
+    return workerSetupPromise;
   }
 
-  try {
-    const version = pdfjsLib.version;
-    // Try to fetch worker and create a blob URL
-    const workerUrl = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-    const response = await fetch(workerUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch worker: ${response.statusText}`);
+  if (typeof window === 'undefined') {
+    return Promise.resolve();
+  }
+
+  workerSetupPromise = setupPDFWorker();
+  return workerSetupPromise;
+}
+
+async function setupPDFWorker() {
+  // Skip if already configured
+  if (pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    return;
+  }
+
+  const version = pdfjsLib.version;
+  const cdnUrls = [
+    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`,
+    `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`,
+  ];
+
+  for (const cdnUrl of cdnUrls) {
+    try {
+      const response = await fetch(cdnUrl, {
+        method: 'GET',
+        mode: 'cors',
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch from ${cdnUrl}: ${response.statusText}`);
+        continue;
+      }
+
+      const workerCode = await response.text();
+      if (!workerCode) {
+        console.warn(`Empty worker code from ${cdnUrl}`);
+        continue;
+      }
+
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      const blobUrl = URL.createObjectURL(blob);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
+      console.log(`PDF worker configured successfully from ${cdnUrl}`);
+      return;
+    } catch (error) {
+      console.warn(`Failed to set up worker from ${cdnUrl}:`, error);
+      continue;
     }
-    
-    const workerCode = await response.text();
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    const blobUrl = URL.createObjectURL(blob);
-    
-    pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
-    console.log('PDF worker setup successfully');
+  }
+
+  // If all CDNs fail, try inline worker approach
+  try {
+    // Use the unpkg URL directly without blob conversion
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+    console.log('PDF worker configured with direct CDN URL');
   } catch (error) {
-    console.warn('Could not set up PDF worker from blob:', error);
-    // Continue without worker - pdf.js may fall back to inline parsing
+    throw new Error(`Could not initialize PDF worker: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
