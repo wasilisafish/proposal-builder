@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['FreightSans Pro', 'Freight Sans Pro', '-apple-system', 'Roboto', 'Helvetica', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -56,6 +59,29 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        matic: {
+          white: "hsl(var(--matic-white))",
+          black: "hsl(var(--matic-black))",
+          azure: {
+            50: "hsl(var(--matic-azure-50))",
+            95: "hsl(var(--matic-azure-95))",
+          },
+          gray: {
+            5: "hsl(var(--matic-gray-5))",
+            10: "hsl(var(--matic-gray-10))",
+            30: "hsl(var(--matic-gray-30))",
+            60: "hsl(var(--matic-gray-60))",
+            80: "hsl(var(--matic-gray-80))",
+            90: "hsl(var(--matic-gray-90))",
+          },
+          positive: {
+            DEFAULT: "hsl(var(--matic-positive))",
+            bg: "hsl(var(--matic-positive-bg))",
+          },
+          violet: {
+            bg: "hsl(var(--matic-violet-bg))",
+          },
         },
       },
       borderRadius: {
