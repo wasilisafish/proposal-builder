@@ -1,4 +1,27 @@
+import { useEffect, useRef } from 'react';
+
 export default function Index() {
+  const stickyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (stickyRef.current) {
+        const rect = stickyRef.current.getBoundingClientRect();
+        const isSticky = rect.bottom === window.innerHeight ||
+                        (rect.bottom < window.innerHeight && rect.top <= 0);
+
+        if (isSticky && !stickyRef.current.classList.contains('is-sticky')) {
+          stickyRef.current.classList.add('is-sticky');
+        } else if (!isSticky && stickyRef.current.classList.contains('is-sticky')) {
+          stickyRef.current.classList.remove('is-sticky');
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Main Content */}
