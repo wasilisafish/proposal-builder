@@ -32,9 +32,6 @@ export interface ExtractedInsuranceData {
 
 export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
   try {
-    // Initialize PDF.js
-    await initializePDF();
-
     const arrayBuffer = await file.arrayBuffer();
     const pdfData = new Uint8Array(arrayBuffer);
 
