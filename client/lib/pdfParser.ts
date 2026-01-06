@@ -1,14 +1,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up worker at module load time (synchronously)
+// Disable worker - use inline parsing instead
+// This avoids cross-origin issues with CDN worker files
 if (typeof window !== 'undefined') {
-  try {
-    const version = pdfjsLib.version;
-    const workerUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-  } catch (e) {
-    console.warn('Failed to set PDF worker:', e);
-  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = null;
 }
 
 export interface ExtractedInsuranceData {
