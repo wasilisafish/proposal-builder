@@ -185,7 +185,10 @@ export default function Index() {
                 }
               }
             `}</style>
-            <div className="sticky-select-offer sticky bottom-0 flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9] transition-all duration-300 ease-out">
+            <div
+              ref={stickyRef}
+              className="sticky-select-offer sticky bottom-0 flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9] transition-all duration-300 ease-out"
+            >
               <p className="text-base font-medium leading-5 text-black flex-1">
                 By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
               </p>
