@@ -109,28 +109,47 @@
 
 /* Sticky Select Offer Styles */
 .sticky-select-offer {
-  transition: all 0.3s ease-out;
-}
-
-.sticky-select-offer.is-sticky {
-  position: fixed !important;
+  position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
   width: 100%;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 40;
-  animation: slideInUp 0.3s ease-out;
+  transition: box-shadow 0.3s ease-out, padding 0.3s ease-out;
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* When it becomes sticky to viewport, add shadow and adjust padding */
+.sticky-select-offer {
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+}
+
+.sticky-select-offer:hover {
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
 }
 
 @keyframes slideInUp {
   from {
-    transform: translateY(10px);
-    opacity: 0.95;
+    transform: translateY(20px);
+    opacity: 0;
   }
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .sticky-select-offer {
+    padding: 12px 16px !important;
+    gap: 12px !important;
+    flex-direction: column !important;
+  }
+
+  .sticky-select-offer button {
+    width: 100%;
   }
 }
 
