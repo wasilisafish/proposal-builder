@@ -281,17 +281,10 @@ export default function Index() {
             <p className="text-lg md:text-xl font-medium leading-[1.4] text-black">
               Did you know you could save up to 20% when Matic shops your auto insurance, too? We work hard to find discounts – even checking to see if using two carriers gets better rates than bundling. Chat with a licensed advisor to get a free auto quote.
             </p>
+            <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 hover:bg-[#1257c7] transition-colors">
+              Contact Your Advisor
+            </button>
           </div>
-          <div className="flex-shrink-0 hidden md:block">
-            <div className="w-[265px] h-[133px] relative">
-              <svg width="265" height="133" viewBox="0 0 265 133" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute">
-                <path d="M230.94 6.38997C251.106 13.2279 260.044 63.9922 261.992 88.5197C257.901 62.0593 240.073 72.9119 237.516 86.6622C236.785 89.2636 234.959 96.1758 233.497 103.014C232.036 109.852 226.8 111.313 224.364 111.19H158.972L152.031 104.5V96.3245C153.127 70.6822 127.19 64.3645 119.883 83.6891C110.395 108.786 103.566 113.915 100.521 113.048H77.5064L72.392 109.703H17.2289L12.8451 111.933H6.26933C1.59326 110.744 0.180695 104.253 0.0589294 101.156C-0.0726013 97.811 0.0589294 101.178 0.0589294 83.3175C0.0589294 65.4794 26.7272 45.9066 40.6093 38.35C76.0452 3.78922 95.2852 -0.670943 112.212 0.0723054H196.6C200.984 0.0723825 210.775 -0.447973 230.94 6.38997Z" fill="#75BFFF"/>
-              </svg>
-            </div>
-          </div>
-          <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 hover:bg-[#1257c7] transition-colors">
-            Contact Your Advisor
-          </button>
         </div>
 
         {/* Why Customers Choose Matic */}
