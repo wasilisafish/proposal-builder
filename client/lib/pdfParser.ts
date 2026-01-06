@@ -24,30 +24,12 @@ async function setupPDFWorker() {
   }
 
   try {
-    // Use the local worker file served by Vite
-    // This path maps to node_modules/pdfjs-dist/build/pdf.worker.min.js
-    // which Vite can serve since we allowed it in the fs config
-    const workerPath = '/node_modules/pdfjs-dist/build/pdf.worker.min.js';
-
-    // Test if the worker is accessible
-    const response = await fetch(workerPath);
-    if (!response.ok) {
-      throw new Error(`Worker file not accessible: ${response.statusText}`);
-    }
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
-    console.log('PDF worker configured with local path');
+    // Use the worker URL imported via Vite's ?url syntax
+    // This ensures the worker file is properly bundled and served
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+    console.log('PDF worker configured successfully');
   } catch (error) {
-    console.error('Failed to set up local worker, trying CDN fallback:', error);
-    try {
-      // Fallback to CDN if local path fails
-      const version = pdfjsLib.version;
-      const cdnUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-      pdfjsLib.GlobalWorkerOptions.workerSrc = cdnUrl;
-      console.log('PDF worker configured with CDN fallback');
-    } catch (fallbackError) {
-      throw new Error(`Could not initialize PDF worker: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
-    }
+    throw new Error(`Could not initialize PDF worker: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
