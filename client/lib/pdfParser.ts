@@ -1,8 +1,12 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
-// Set up worker for pdf.js using local file
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+// Set up worker for pdf.js - use the workerSrc from pdfjs-dist itself
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+  ).href;
+}
 
 export interface ExtractedInsuranceData {
   policyStartDate?: string;
