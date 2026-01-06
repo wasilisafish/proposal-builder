@@ -326,6 +326,16 @@ export default function Index() {
           </p>
         </div>
       </div>
+
+      {/* Select Offer - Sticky Bottom Bar */}
+      <div className="sticky bottom-0 left-0 right-0 w-full flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 pb-5 border-t border-[#D9D9D9] z-40 shadow-lg">
+        <p className="text-base font-medium leading-5 text-black flex-1">
+          By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
+        </p>
+        <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors">
+          Select Offer
+        </button>
+      </div>
     </div>
   );
 }
