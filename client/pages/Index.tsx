@@ -1,45 +1,27 @@
 import { useState } from 'react';
-import { parsePDF, type ExtractedInsuranceData } from '../lib/pdfParser';
+import { type ExtractedInsuranceData } from '../lib/pdfParser';
 
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedInsuranceData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [parseError, setParseError] = useState<string | null>(null);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (!validTypes.includes(file.type)) {
-      setParseError('Please upload a PDF or image file (JPEG/PNG)');
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
       return;
     }
 
     setUploadedFile(file);
-    setIsLoading(true);
-    setParseError(null);
-
-    try {
-      if (file.type === 'application/pdf') {
-        const data = await parsePDF(file);
-        setExtractedData(data);
-        // Clear error if parsing was successful
-        setParseError(null);
-      } else {
-        // For images, we would use OCR (not implemented in this version)
-        setParseError('Image OCR parsing coming soon. Please upload a PDF for now.');
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error parsing file:', errorMsg);
-      setParseError(`Failed to parse PDF: ${errorMsg}`);
-      setExtractedData(null);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
