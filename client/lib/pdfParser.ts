@@ -1,11 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up worker for pdf.js - use the workerSrc from pdfjs-dist itself
+// Set up worker for pdf.js using jsdelivr CDN
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).href;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 }
 
 export interface ExtractedInsuranceData {
