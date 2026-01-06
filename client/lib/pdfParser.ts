@@ -1,7 +1,32 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Note: We don't configure a worker here to avoid CORS/CDN issues
-// pdf.js will use its built-in fallback for parsing without a worker
+// Fetch and set up worker as a blob URL to avoid CORS issues
+async function setupPDFWorker() {
+  if (typeof window === 'undefined' || pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    return; // Already set up or not in browser
+  }
+
+  try {
+    const version = pdfjsLib.version;
+    // Try to fetch worker and create a blob URL
+    const workerUrl = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+    const response = await fetch(workerUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch worker: ${response.statusText}`);
+    }
+    
+    const workerCode = await response.text();
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const blobUrl = URL.createObjectURL(blob);
+    
+    pdfjsLib.GlobalWorkerOptions.workerSrc = blobUrl;
+    console.log('PDF worker setup successfully');
+  } catch (error) {
+    console.warn('Could not set up PDF worker from blob:', error);
+    // Continue without worker - pdf.js may fall back to inline parsing
+  }
+}
 
 export interface ExtractedInsuranceData {
   policyStartDate?: string;
@@ -24,37 +49,21 @@ export interface ExtractedInsuranceData {
 
 export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
   try {
+    // Set up worker once before parsing
+    await setupPDFWorker();
+
     const arrayBuffer = await file.arrayBuffer();
     const pdfData = new Uint8Array(arrayBuffer);
 
-    let fullText = '';
-    let pdf;
-
-    try {
-      // Try loading with default worker setup
-      const loadingTask = pdfjsLib.getDocument(pdfData);
-      pdf = await loadingTask.promise;
-    } catch (workerError) {
-      console.warn('Worker loading failed, trying alternative parsing method:', workerError);
-
-      // If worker fails, try disabling worker and using inline parsing
-      pdfjsLib.GlobalWorkerOptions.workerSrc = undefined;
-      try {
-        const loadingTask = pdfjsLib.getDocument({
-          data: pdfData,
-          useWorker: false,
-          cMapUrl: undefined, // Disable cmap to simplify
-          disableFontFace: true, // Don't try to use system fonts
-        } as any);
-        pdf = await loadingTask.promise;
-      } catch (fallbackError) {
-        throw new Error(`Failed to load PDF with both worker and fallback method: ${fallbackError}`);
-      }
-    }
+    // Load PDF document
+    const loadingTask = pdfjsLib.getDocument(pdfData);
+    const pdf = await loadingTask.promise;
 
     if (!pdf) {
       throw new Error('Failed to load PDF document');
     }
+
+    let fullText = '';
 
     // Extract text from all pages
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -78,7 +87,7 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
     fullText = fullText.trim();
 
     if (!fullText) {
-      throw new Error('No text content found in PDF - it may be a scanned image or encrypted');
+      throw new Error('No text content found in PDF - it may be a scanned image');
     }
 
     return extractInsuranceData(fullText);
