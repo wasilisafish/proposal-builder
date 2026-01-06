@@ -1,16 +1,13 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Initialize PDF.js
-let pdfInitialized = false;
-
-async function initializePDF() {
-  if (pdfInitialized) return;
-
-  if (typeof window !== 'undefined') {
-    // Set worker source before first use
+// Set up worker at module load time (synchronously)
+if (typeof window !== 'undefined') {
+  try {
     const version = pdfjsLib.version;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-    pdfInitialized = true;
+    const workerUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+  } catch (e) {
+    console.warn('Failed to set PDF worker:', e);
   }
 }
 
