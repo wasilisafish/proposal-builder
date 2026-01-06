@@ -39,61 +39,50 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
     await initializePDF();
 
     const arrayBuffer = await file.arrayBuffer();
+    const pdfData = new Uint8Array(arrayBuffer);
 
-    // Load PDF document
-    let pdf;
-    try {
-      pdf = await pdfjsLib.getDocument({
-        data: new Uint8Array(arrayBuffer),
-      }).promise;
-    } catch (docError) {
-      console.error('Failed to load PDF document:', docError);
-      throw new Error(`Failed to load PDF: ${(docError as Error).message}`);
-    }
+    // Load PDF document - use simple approach
+    const loadingTask = pdfjsLib.getDocument(pdfData);
+    const pdf = await loadingTask.promise;
 
     if (!pdf) {
-      throw new Error('PDF document is null or undefined');
+      throw new Error('Failed to load PDF document');
     }
 
     let fullText = '';
-    const numPages = pdf.numPages;
 
     // Extract text from all pages
-    for (let i = 1; i <= numPages; i++) {
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       try {
-        const page = await pdf.getPage(i);
+        const page = await pdf.getPage(pageNum);
+        if (!page) continue;
+
         const textContent = await page.getTextContent();
 
         const pageText = (textContent.items || [])
-          .map((item: any) => {
-            if (item.str) return item.str;
-            return '';
-          })
+          .map((item: any) => item.str || '')
+          .filter(Boolean)
           .join(' ');
 
         fullText += pageText + ' ';
       } catch (pageError) {
-        console.warn(`Warning: Could not extract text from page ${i}:`, pageError);
-        // Continue with next page
+        console.warn(`Skipping page ${pageNum}:`, pageError);
       }
     }
 
-    if (!fullText || fullText.trim().length === 0) {
-      throw new Error('No text content found in PDF. The PDF may be scanned or image-based.');
+    // Clean up text
+    fullText = fullText.trim();
+
+    if (!fullText) {
+      throw new Error('No text content found in PDF');
     }
 
     const data = extractInsuranceData(fullText);
-
-    // If no data was extracted, it might be a valid PDF but not an insurance document
-    if (Object.keys(data).every(key => !data[key as keyof ExtractedInsuranceData])) {
-      console.warn('No insurance data found in PDF text');
-    }
-
     return data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('PDF parsing error:', errorMessage);
-    throw new Error(`PDF parsing failed: ${errorMessage}`);
+    console.error('PDF parsing failed:', errorMessage);
+    throw error;
   }
 }
 
