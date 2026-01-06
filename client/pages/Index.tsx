@@ -1,28 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { useEffect, useRef } from 'react';
-
 export default function Index() {
-  const stickyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (stickyRef.current) {
-        const rect = stickyRef.current.getBoundingClientRect();
-        const isSticky = rect.bottom === window.innerHeight ||
-                        (rect.bottom < window.innerHeight && rect.top <= 0);
-
-        if (isSticky && !stickyRef.current.classList.contains('is-sticky')) {
-          stickyRef.current.classList.add('is-sticky');
-        } else if (!isSticky && stickyRef.current.classList.contains('is-sticky')) {
-          stickyRef.current.classList.remove('is-sticky');
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -152,10 +130,7 @@ export default function Index() {
             <div className="h-px bg-[#D9D9D9]"></div>
 
             {/* Select Offer - Sticky */}
-            <div
-              ref={stickyRef}
-              className="sticky-select-offer sticky bottom-0 flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9]"
-            >
+            <div className="sticky-select-offer sticky bottom-0 flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9]">
               <p className="text-base font-medium leading-5 text-black flex-1">
                 By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
               </p>
