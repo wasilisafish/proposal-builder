@@ -1,45 +1,8 @@
-import { useEffect, useRef } from 'react';
-
 export default function Index() {
-  const stickyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!stickyRef.current) return;
-
-      const stickyElement = stickyRef.current;
-      const rect = stickyElement.getBoundingClientRect();
-
-      // Only switch to fixed if the element is actually out of view (top is above viewport)
-      // Add small buffer to prevent rapid toggling
-      if (rect.top <= 0) {
-        stickyElement.style.position = 'fixed';
-        stickyElement.style.bottom = '0';
-        stickyElement.style.left = '0';
-        stickyElement.style.right = '0';
-        stickyElement.style.width = '100%';
-        stickyElement.style.zIndex = '40';
-      } else {
-        // Let CSS handle the sticky positioning
-        stickyElement.style.position = 'sticky';
-        stickyElement.style.bottom = '0';
-        stickyElement.style.left = '0';
-        stickyElement.style.right = '0';
-        stickyElement.style.width = '100%';
-        stickyElement.style.zIndex = '40';
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Also call on mount to set initial state
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content */}
-      <div className="max-w-[900px] mx-auto px-5 md:px-20 py-10 pb-10" style={{ minHeight: "1349px" }}>
+      <div className="max-w-[900px] mx-auto px-5 md:px-20 py-10 pb-10 flex-1" style={{ minHeight: "1349px" }}>
         {/* Header */}
         <div className="flex justify-center items-center gap-3 mb-3">
           <svg width="96" height="32" viewBox="0 0 96 32" fill="none" xmlns="http://www.w3.org/2000/svg">
