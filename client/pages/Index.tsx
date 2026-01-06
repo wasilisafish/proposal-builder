@@ -159,7 +159,7 @@ export default function Index() {
               <p className="text-base font-medium leading-5 text-black flex-1">
                 By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
               </p>
-              <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] active:bg-[#0d47b3] transition-all duration-200 shadow-md hover:shadow-lg">
+              <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors">
                 Select Offer
               </button>
             </div>
