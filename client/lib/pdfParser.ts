@@ -2,7 +2,9 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 // Set up worker for pdf.js using jsdelivr CDN
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  // Try multiple CDN sources for redundancy
+  const version = pdfjsLib.version;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
 }
 
 export interface ExtractedInsuranceData {
@@ -25,22 +27,38 @@ export interface ExtractedInsuranceData {
 }
 
 export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
 
-  let fullText = '';
+    // Disable worker temporarily to avoid worker loading issues
+    pdfjsLib.GlobalWorkerOptions.workerSrc = null;
 
-  // Extract text from all pages
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      .map((item: any) => item.str)
-      .join(' ');
-    fullText += pageText + ' ';
+    const pdf = await pdfjsLib.getDocument({
+      data: new Uint8Array(arrayBuffer),
+      useWorker: false, // Disable worker to avoid CORS issues
+    }).promise;
+
+    let fullText = '';
+
+    // Extract text from all pages
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => (item as any).str || '')
+        .join(' ');
+      fullText += pageText + ' ';
+    }
+
+    if (!fullText || fullText.trim().length === 0) {
+      throw new Error('No text content found in PDF');
+    }
+
+    return extractInsuranceData(fullText);
+  } catch (error) {
+    console.error('PDF parsing error:', error);
+    throw error;
   }
-
-  return extractInsuranceData(fullText);
 }
 
 function extractInsuranceData(text: string): ExtractedInsuranceData {
