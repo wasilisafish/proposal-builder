@@ -88,8 +88,13 @@ export interface ExtractedInsuranceData {
 
 export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
   try {
-    // Set up worker once before parsing
-    await setupPDFWorker();
+    // Initialize worker first - this must complete before getDocument is called
+    await initializeWorkerSetup();
+
+    // Verify worker is configured
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      throw new Error('PDF worker could not be initialized');
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     const pdfData = new Uint8Array(arrayBuffer);
