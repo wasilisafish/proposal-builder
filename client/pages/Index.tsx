@@ -261,7 +261,7 @@ export default function Index() {
                   <p className="text-sm font-bold text-black">
                     {uploadedFile ? uploadedFile.name : 'Click to upload or drag and drop'}
                   </p>
-                  <p className="text-xs font-medium text-[#666] mt-1">PDF, JPG or PNG (Max 10MB)</p>
+                  <p className="text-xs font-medium text-[#666] mt-1">PDF (Max 10MB)</p>
                 </div>
               </label>
             </div>
