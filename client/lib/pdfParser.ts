@@ -1,10 +1,17 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up worker for pdf.js using jsdelivr CDN
-if (typeof window !== 'undefined') {
-  // Try multiple CDN sources for redundancy
-  const version = pdfjsLib.version;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+// Initialize PDF.js
+let pdfInitialized = false;
+
+async function initializePDF() {
+  if (pdfInitialized) return;
+
+  if (typeof window !== 'undefined') {
+    // Set worker source before first use
+    const version = pdfjsLib.version;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+    pdfInitialized = true;
+  }
 }
 
 export interface ExtractedInsuranceData {
@@ -28,36 +35,65 @@ export interface ExtractedInsuranceData {
 
 export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
   try {
+    // Initialize PDF.js
+    await initializePDF();
+
     const arrayBuffer = await file.arrayBuffer();
 
-    // Disable worker temporarily to avoid worker loading issues
-    pdfjsLib.GlobalWorkerOptions.workerSrc = null;
+    // Load PDF document
+    let pdf;
+    try {
+      pdf = await pdfjsLib.getDocument({
+        data: new Uint8Array(arrayBuffer),
+      }).promise;
+    } catch (docError) {
+      console.error('Failed to load PDF document:', docError);
+      throw new Error(`Failed to load PDF: ${(docError as Error).message}`);
+    }
 
-    const pdf = await pdfjsLib.getDocument({
-      data: new Uint8Array(arrayBuffer),
-      useWorker: false, // Disable worker to avoid CORS issues
-    }).promise;
+    if (!pdf) {
+      throw new Error('PDF document is null or undefined');
+    }
 
     let fullText = '';
+    const numPages = pdf.numPages;
 
     // Extract text from all pages
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => (item as any).str || '')
-        .join(' ');
-      fullText += pageText + ' ';
+    for (let i = 1; i <= numPages; i++) {
+      try {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+
+        const pageText = (textContent.items || [])
+          .map((item: any) => {
+            if (item.str) return item.str;
+            return '';
+          })
+          .join(' ');
+
+        fullText += pageText + ' ';
+      } catch (pageError) {
+        console.warn(`Warning: Could not extract text from page ${i}:`, pageError);
+        // Continue with next page
+      }
     }
 
     if (!fullText || fullText.trim().length === 0) {
-      throw new Error('No text content found in PDF');
+      throw new Error('No text content found in PDF. The PDF may be scanned or image-based.');
     }
 
-    return extractInsuranceData(fullText);
+    const data = extractInsuranceData(fullText);
+
+    // If no data was extracted, it might be a valid PDF but not an insurance document
+    if (Object.keys(data).every(key => !data[key as keyof ExtractedInsuranceData])) {
+      console.warn('No insurance data found in PDF text');
+    }
+
+    return data;
   } catch (error) {
-    console.error('PDF parsing error:', error);
-    throw error;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('PDF parsing error:', errorMessage);
+    throw new Error(`PDF parsing failed: ${errorMessage}`);
   }
 }
 
