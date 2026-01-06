@@ -128,19 +128,6 @@ export default function Index() {
           </div>
         </div>
 
-        {/* Select Offer - Sticky (Outside main container for true full-width sticky) */}
-        <div
-          ref={stickyRef}
-          className="sticky-select-offer sticky bottom-0 left-0 right-0 w-full flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9] z-40"
-        >
-          <p className="text-base font-medium leading-5 text-black flex-1">
-            By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
-          </p>
-          <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors">
-            Select Offer
-          </button>
-        </div>
-
         {/* Home Insurance Details */}
         <div className="rounded-lg border border-[#E6E6E6] p-5 md:p-6 flex flex-col gap-5 mb-6">
           <div className="flex flex-col gap-1 px-1">
