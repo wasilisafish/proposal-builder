@@ -31,15 +31,34 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
     const arrayBuffer = await file.arrayBuffer();
     const pdfData = new Uint8Array(arrayBuffer);
 
-    // Load PDF document - use simple approach
-    const loadingTask = pdfjsLib.getDocument(pdfData);
-    const pdf = await loadingTask.promise;
+    let fullText = '';
+    let pdf;
+
+    try {
+      // Try loading with default worker setup
+      const loadingTask = pdfjsLib.getDocument(pdfData);
+      pdf = await loadingTask.promise;
+    } catch (workerError) {
+      console.warn('Worker loading failed, trying alternative parsing method:', workerError);
+
+      // If worker fails, try disabling worker and using inline parsing
+      pdfjsLib.GlobalWorkerOptions.workerSrc = undefined;
+      try {
+        const loadingTask = pdfjsLib.getDocument({
+          data: pdfData,
+          useWorker: false,
+          cMapUrl: undefined, // Disable cmap to simplify
+          disableFontFace: true, // Don't try to use system fonts
+        } as any);
+        pdf = await loadingTask.promise;
+      } catch (fallbackError) {
+        throw new Error(`Failed to load PDF with both worker and fallback method: ${fallbackError}`);
+      }
+    }
 
     if (!pdf) {
       throw new Error('Failed to load PDF document');
     }
-
-    let fullText = '';
 
     // Extract text from all pages
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -48,7 +67,6 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
         if (!page) continue;
 
         const textContent = await page.getTextContent();
-
         const pageText = (textContent.items || [])
           .map((item: any) => item.str || '')
           .filter(Boolean)
@@ -56,7 +74,7 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
 
         fullText += pageText + ' ';
       } catch (pageError) {
-        console.warn(`Skipping page ${pageNum}:`, pageError);
+        console.warn(`Could not extract page ${pageNum}:`, pageError);
       }
     }
 
@@ -64,15 +82,14 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
     fullText = fullText.trim();
 
     if (!fullText) {
-      throw new Error('No text content found in PDF');
+      throw new Error('No text content found in PDF - it may be a scanned image or encrypted');
     }
 
-    const data = extractInsuranceData(fullText);
-    return data;
+    return extractInsuranceData(fullText);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('PDF parsing failed:', errorMessage);
-    throw error;
+    console.error('PDF parsing error:', errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
