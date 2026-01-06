@@ -26,13 +26,16 @@ export default function Index() {
       if (file.type === 'application/pdf') {
         const data = await parsePDF(file);
         setExtractedData(data);
+        // Clear error if parsing was successful
+        setParseError(null);
       } else {
         // For images, we would use OCR (not implemented in this version)
         setParseError('Image OCR parsing coming soon. Please upload a PDF for now.');
       }
     } catch (error) {
-      console.error('Error parsing file:', error);
-      setParseError('Failed to parse the document. Please ensure it\'s a valid PDF with readable text.');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error parsing file:', errorMsg);
+      setParseError(`Failed to parse PDF: ${errorMsg}`);
       setExtractedData(null);
     } finally {
       setIsLoading(false);
