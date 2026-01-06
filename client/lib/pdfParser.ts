@@ -22,36 +22,31 @@ async function setupPDFWorker() {
     return;
   }
 
-  const version = pdfjsLib.version;
-  const cdnUrls = [
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`,
-    `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`,
-  ];
-
-  // Try to set the worker source using direct CDN URLs
-  // PDF.js will fetch these URLs as needed
-  for (const cdnUrl of cdnUrls) {
-    try {
-      // Validate the URL is accessible before setting it
-      const response = await fetch(cdnUrl, { method: 'HEAD', mode: 'cors' });
-      if (response.ok) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = cdnUrl;
-        console.log(`PDF worker configured with CDN URL: ${cdnUrl}`);
-        return;
-      }
-    } catch (error) {
-      console.warn(`Failed to validate CDN URL ${cdnUrl}:`, error);
-      continue;
-    }
-  }
-
-  // If we couldn't validate any CDN, just set the first one and hope it works
-  const defaultUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = defaultUrl;
-    console.log('PDF worker configured with default CDN URL (unverified)');
+    // Use the local worker file served by Vite
+    // This path maps to node_modules/pdfjs-dist/build/pdf.worker.min.js
+    // which Vite can serve since we allowed it in the fs config
+    const workerPath = '/node_modules/pdfjs-dist/build/pdf.worker.min.js';
+
+    // Test if the worker is accessible
+    const response = await fetch(workerPath);
+    if (!response.ok) {
+      throw new Error(`Worker file not accessible: ${response.statusText}`);
+    }
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerPath;
+    console.log('PDF worker configured with local path');
   } catch (error) {
-    throw new Error(`Could not initialize PDF worker: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Failed to set up local worker, trying CDN fallback:', error);
+    try {
+      // Fallback to CDN if local path fails
+      const version = pdfjsLib.version;
+      const cdnUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.js`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = cdnUrl;
+      console.log('PDF worker configured with CDN fallback');
+    } catch (fallbackError) {
+      throw new Error(`Could not initialize PDF worker: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+    }
   }
 }
 
