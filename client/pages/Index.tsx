@@ -1,4 +1,42 @@
+import { useState } from 'react';
+
 export default function Index() {
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [extractedData, setExtractedData] = useState<Record<string, string> | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadedFile(file);
+    setIsLoading(true);
+
+    try {
+      // Simulate data extraction from document
+      // In production, this would call an API to extract data from PDF/image
+      setTimeout(() => {
+        setExtractedData({
+          policyStartDate: '3/15/2024',
+          deductible: '$1,500',
+          dwelling: '$350,000',
+          otherStructures: '$60,000',
+          personalProperty: '$120,000',
+          lossOfUse: '$45,000',
+          personalLiability: '$100,000',
+          medicalPayment: '$2,500',
+          waterBackup: 'Not Included',
+          earthquakeCoverage: 'Not Included',
+          moldPropertyDamage: '$10,000',
+        });
+        setIsLoading(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content */}
