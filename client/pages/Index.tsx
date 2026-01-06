@@ -1,38 +1,40 @@
 import { useState } from 'react';
+import { parsePDF, type ExtractedInsuranceData } from '../lib/pdfParser';
 
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<Record<string, string> | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractedInsuranceData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      setParseError('Please upload a PDF or image file (JPEG/PNG)');
+      return;
+    }
+
     setUploadedFile(file);
     setIsLoading(true);
+    setParseError(null);
 
     try {
-      // Simulate data extraction from document
-      // In production, this would call an API to extract data from PDF/image
-      setTimeout(() => {
-        setExtractedData({
-          policyStartDate: '3/15/2024',
-          deductible: '$1,500',
-          dwelling: '$350,000',
-          otherStructures: '$60,000',
-          personalProperty: '$120,000',
-          lossOfUse: '$45,000',
-          personalLiability: '$100,000',
-          medicalPayment: '$2,500',
-          waterBackup: 'Not Included',
-          earthquakeCoverage: 'Not Included',
-          moldPropertyDamage: '$10,000',
-        });
-        setIsLoading(false);
-      }, 1500);
+      if (file.type === 'application/pdf') {
+        const data = await parsePDF(file);
+        setExtractedData(data);
+      } else {
+        // For images, we would use OCR (not implemented in this version)
+        setParseError('Image OCR parsing coming soon. Please upload a PDF for now.');
+      }
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error('Error parsing file:', error);
+      setParseError('Failed to parse the document. Please ensure it\'s a valid PDF with readable text.');
+      setExtractedData(null);
+    } finally {
       setIsLoading(false);
     }
   };
