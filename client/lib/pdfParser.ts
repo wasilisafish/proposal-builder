@@ -1,11 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up worker from UNPKG CDN (serves non-module version properly)
-if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-  const version = pdfjsLib.version;
-  // Use unpkg which serves the proper non-module format
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-}
+// Note: We don't configure a worker here to avoid CORS/CDN issues
+// pdf.js will use its built-in fallback for parsing without a worker
 
 export interface ExtractedInsuranceData {
   policyStartDate?: string;
