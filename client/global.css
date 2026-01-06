@@ -107,6 +107,50 @@
   }
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpSticky {
+  from {
+    opacity: 0.8;
+    transform: translateY(10px);
+    box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.05);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.sticky-select-offer {
+  animation: slideUp 0.4s ease-out;
+  transition: all 0.3s ease-out;
+}
+
+.sticky-select-offer.is-sticky {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  max-width: 100%;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px 20px;
+  z-index: 40;
+  animation: slideUpSticky 0.3s ease-out;
+}
+
 @layer base {
   * {
     @apply border-border;
