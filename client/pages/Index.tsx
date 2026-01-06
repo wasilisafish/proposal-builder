@@ -123,6 +123,18 @@ export default function Index() {
                 This total cost includes all your selected insurance products. Note that policy periods might be different.
               </p>
             </div>
+
+            <div className="h-px bg-[#D9D9D9]"></div>
+
+            {/* Select Offer - Sticky */}
+            <div className="sticky bottom-0 flex flex-col md:flex-row items-start gap-5 bg-white pt-4">
+              <p className="text-base font-medium leading-5 text-black flex-1">
+                By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
+              </p>
+              <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors">
+                Select Offer
+              </button>
+            </div>
           </div>
         </div>
 
