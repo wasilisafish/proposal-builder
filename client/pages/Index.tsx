@@ -59,13 +59,6 @@ export default function Index() {
               </div>
             </div>
           </div>
-          <div className="flex-shrink-0">
-            <img 
-              src="https://cdn.builder.io/api/v1/image/assets%2F3df5f4c8b1fd4a25bde80a83e1a5b831%2Fafdeef4b87794ff49dd3b9384e18aaa6?format=webp&width=800" 
-              alt="House and Car Illustration" 
-              className="w-[200px] md:w-[246px] h-auto"
-            />
-          </div>
         </div>
 
         {/* Offer Summary */}
