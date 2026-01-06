@@ -32,7 +32,7 @@ export default function Index() {
             <h1 className="text-[32px] md:text-[40px] font-bold leading-[1.3] text-black">
               Review your insurance offer
             </h1>
-            <div className="flex items-start gap-6 bg-white/50 rounded-lg p-3">
+            <div className="flex items-start gap-6 bg-transparent rounded-lg p-3">
               <div className="w-16 h-16 flex-shrink-0">
                 <svg width="64" height="60" viewBox="0 0 64 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <ellipse cx="30.2679" cy="30.6813" rx="29.7777" ry="29.32" fill="#66A4F7"/>
