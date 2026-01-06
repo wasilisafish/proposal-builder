@@ -255,6 +255,125 @@ export default function Index() {
 
             <div className="h-px bg-[#D9D9D9]"></div>
 
+            {/* Upload Declaration Page Section */}
+            <div className="flex flex-col gap-4">
+              <h3 className="text-base font-bold leading-5 text-black">Compare with your current policy</h3>
+              <p className="text-sm font-medium leading-5 text-[#666]">Upload your current policy's declaration page and we'll extract the data to show you a side-by-side comparison</p>
+
+              <label className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors">
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2V14M2 12H22M7 7L12 2L17 7" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="text-center">
+                  <p className="text-sm font-bold text-black">
+                    {uploadedFile ? uploadedFile.name : 'Click to upload or drag and drop'}
+                  </p>
+                  <p className="text-xs font-medium text-[#666] mt-1">PDF, JPG or PNG (Max 10MB)</p>
+                </div>
+              </label>
+            </div>
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-6 gap-2">
+                <div className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <span className="text-sm font-medium text-[#666] ml-2">Extracting data...</span>
+              </div>
+            )}
+
+            {/* Comparison Display */}
+            {extractedData && !isLoading && (
+              <div className="flex flex-col gap-4">
+                <h3 className="text-base font-bold leading-5 text-black">Policy Comparison</h3>
+                <div className="flex flex-col gap-3">
+                  {/* Policy Basics Comparison */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center px-1">
+                      <span className="text-sm font-bold text-black">Policy Start Date</span>
+                      <span className="text-xs font-medium text-[#666]">Presented vs Your Current</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">1/1/2026</div>
+                      <div className="bg-[#F2F2F2] p-2 rounded text-sm font-medium text-black text-center">{extractedData.policyStartDate}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center px-1">
+                      <span className="text-sm font-bold text-black">Deductible</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">$1,000</div>
+                      <div className={`p-2 rounded text-sm font-medium text-center ${extractedData.deductible !== '$1,000' ? 'bg-[#FFE5E5] text-[#D32F2F]' : 'bg-[#E5F2F1] text-[#2E7D32]'}`}>
+                        {extractedData.deductible}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Coverage Comparison */}
+                  <div className="flex flex-col gap-2 mt-2">
+                    <span className="text-sm font-bold text-black px-1">Standard Coverages</span>
+                    {[
+                      { label: 'Dwelling', presented: '$378,380', key: 'dwelling' },
+                      { label: 'Other structures', presented: '$72,000', key: 'otherStructures' },
+                      { label: 'Personal property', presented: '$138,000', key: 'personalProperty' },
+                      { label: 'Loss of use', presented: '$50,000', key: 'lossOfUse' },
+                      { label: 'Personal liability', presented: '$10,000', key: 'personalLiability' },
+                      { label: 'Medical payment (to others)', presented: '$5,000', key: 'medicalPayment' },
+                    ].map((item, idx) => (
+                      <div key={item.key} className={`grid grid-cols-2 gap-2 px-1 py-1 ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : ''}`}>
+                        <div className="text-xs font-medium text-[#666]">{item.label}</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <span className="text-xs font-medium text-black text-center">{item.presented}</span>
+                          <span className={`text-xs font-medium text-center rounded px-1 ${
+                            extractedData[item.key] === item.presented
+                              ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                              : 'bg-[#FFE5E5] text-[#D32F2F]'
+                          }`}>
+                            {extractedData[item.key]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Additional Coverages Comparison */}
+                  <div className="flex flex-col gap-2 mt-2">
+                    <span className="text-sm font-bold text-black px-1">Additional Coverages</span>
+                    {[
+                      { label: 'Water back-up', presented: '$10,000', key: 'waterBackup' },
+                      { label: 'Earthquake coverage', presented: 'Not Included', key: 'earthquakeCoverage' },
+                      { label: 'Mold property damage', presented: 'Not Included', key: 'moldPropertyDamage' },
+                    ].map((item, idx) => (
+                      <div key={item.key} className={`grid grid-cols-2 gap-2 px-1 py-1 ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : ''}`}>
+                        <div className="text-xs font-medium text-[#666]">{item.label}</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <span className="text-xs font-medium text-black text-center">{item.presented}</span>
+                          <span className={`text-xs font-medium text-center rounded px-1 ${
+                            extractedData[item.key] === item.presented
+                              ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                              : 'bg-[#FFE5E5] text-[#D32F2F]'
+                          }`}>
+                            {extractedData[item.key]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="h-px bg-[#D9D9D9]"></div>
+
             <div className="flex items-start gap-1 justify-between">
               <span className="text-2xl font-bold leading-8 text-[#111827]">Yearly premium</span>
               <span className="text-2xl font-bold leading-8 text-[#111827]">$2,083.00</span>
