@@ -266,32 +266,8 @@ export default function Index() {
               </label>
             </div>
 
-            {/* Error State */}
-            {parseError && (
-              <div className="flex items-start gap-3 p-4 bg-[#FFE5E5] border border-[#FFB3B3] rounded">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
-                  <circle cx="12" cy="12" r="10" stroke="#D32F2F" strokeWidth="2"/>
-                  <path d="M12 8V12M12 16H12.01" stroke="#D32F2F" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-[#D32F2F]">Error parsing document</p>
-                  <p className="text-xs text-[#D32F2F] mt-1">{parseError}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Loading State */}
-            {isLoading && (
-              <div className="flex items-center justify-center py-6 gap-2">
-                <div className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                <div className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                <span className="text-sm font-medium text-[#666] ml-2">Extracting data from PDF...</span>
-              </div>
-            )}
-
             {/* Comparison Display */}
-            {extractedData && !isLoading && (
+            {extractedData && (
               <div className="flex flex-col gap-4">
                 <h3 className="text-base font-bold leading-5 text-black">Policy Comparison</h3>
                 <div className="flex flex-col gap-3">
