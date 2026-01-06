@@ -40,7 +40,7 @@ export default function Index() {
               </div>
               <div className="flex-1 flex flex-col gap-3">
                 <p className="text-base font-medium text-black leading-5">
-                  I'm Maria, your [state] licensed insurance advisor. I've helped [#] customers protect their most important belongings.
+                  I'm Maria, your [state] licensed insurance advisor. I've helped 656 customers protect their most important belongings.
                 </p>
                 <div className="flex flex-wrap items-start gap-6">
                   <div className="flex items-start gap-2">
