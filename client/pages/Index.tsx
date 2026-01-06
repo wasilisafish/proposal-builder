@@ -152,44 +152,9 @@ export default function Index() {
             <div className="h-px bg-[#D9D9D9]"></div>
 
             {/* Select Offer - Sticky */}
-            <style>{`
-              @keyframes slideUp {
-                from {
-                  opacity: 0;
-                  transform: translateY(20px);
-                }
-                to {
-                  opacity: 1;
-                  transform: translateY(0);
-                }
-              }
-
-              .sticky-select-offer {
-                animation: slideUp 0.4s ease-out;
-              }
-
-              @supports (position: sticky) {
-                .sticky-select-offer.is-sticky {
-                  position: fixed;
-                  bottom: 0;
-                  left: 0;
-                  right: 0;
-                  width: 100vw;
-                  max-width: 100%;
-                  margin-left: -50vw;
-                  margin-right: -50vw;
-                  left: 50%;
-                  transform: translateX(-50%);
-                  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);
-                  padding: 16px 20px;
-                  z-index: 40;
-                  animation: slideUp 0.3s ease-out;
-                }
-              }
-            `}</style>
             <div
               ref={stickyRef}
-              className="sticky-select-offer sticky bottom-0 flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9] transition-all duration-300 ease-out"
+              className="sticky-select-offer sticky bottom-0 flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 border-t border-[#D9D9D9]"
             >
               <p className="text-base font-medium leading-5 text-black flex-1">
                 By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
