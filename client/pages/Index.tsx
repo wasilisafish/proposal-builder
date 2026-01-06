@@ -266,6 +266,101 @@ export default function Index() {
               </label>
             </div>
 
+            {/* File Uploaded Message */}
+            {uploadedFile && !extractedData && (
+              <div className="flex items-start gap-3 p-4 bg-[#E5F2F1] border border-[#A5D6A7] rounded">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                  <circle cx="12" cy="12" r="10" stroke="#2E7D32" strokeWidth="2"/>
+                  <path d="M8 12L11 15L16 9" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-[#2E7D32]">File uploaded successfully</p>
+                  <p className="text-xs text-[#2E7D32] mt-1">Review the PDF and manually enter the policy details below to compare with the presented offer.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Data Entry Form */}
+            {uploadedFile && !extractedData && (
+              <div className="flex flex-col gap-4">
+                <h3 className="text-base font-bold leading-5 text-black">Enter Your Current Policy Details</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Deductible</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $1,000"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, deductible: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Dwelling</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $378,380"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, dwelling: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Other Structures</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $72,000"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, otherStructures: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Personal Property</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $138,000"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, personalProperty: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Loss of Use</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $50,000"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, lossOfUse: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Personal Liability</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $10,000"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, personalLiability: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Medical Payment</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., $5,000"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, medicalPayment: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-black">Policy Start Date</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., 1/1/2024"
+                      onChange={(e) => setExtractedData({ ...extractedData || {}, policyStartDate: e.target.value })}
+                      className="px-3 py-2 border border-[#D9D9D9] rounded text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Comparison Display */}
             {extractedData && (
               <div className="flex flex-col gap-4">
