@@ -10,21 +10,29 @@ export default function Index() {
       const stickyElement = stickyRef.current;
       const rect = stickyElement.getBoundingClientRect();
 
-      // If the sticky element is above the viewport, make it fixed
-      if (rect.top < window.innerHeight - 100) {
+      // Only switch to fixed if the element is actually out of view (top is above viewport)
+      // Add small buffer to prevent rapid toggling
+      if (rect.top <= 0) {
         stickyElement.style.position = 'fixed';
         stickyElement.style.bottom = '0';
         stickyElement.style.left = '0';
         stickyElement.style.right = '0';
         stickyElement.style.width = '100%';
+        stickyElement.style.zIndex = '40';
       } else {
-        // Otherwise, let it be sticky normally
+        // Let CSS handle the sticky positioning
         stickyElement.style.position = 'sticky';
         stickyElement.style.bottom = '0';
+        stickyElement.style.left = '0';
+        stickyElement.style.right = '0';
+        stickyElement.style.width = '100%';
+        stickyElement.style.zIndex = '40';
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    // Also call on mount to set initial state
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
