@@ -2,7 +2,7 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-white">
       {/* Main Content */}
-      <div className="max-w-[900px] mx-auto px-5 md:px-20 py-10 pb-32" style={{ minHeight: "1349px" }}>
+      <div className="max-w-[900px] mx-auto px-5 md:px-20 py-10 pb-10" style={{ minHeight: "1349px" }}>
         {/* Header */}
         <div className="flex justify-center items-center gap-3 mb-3">
           <svg width="96" height="32" viewBox="0 0 96 32" fill="none" xmlns="http://www.w3.org/2000/svg">
