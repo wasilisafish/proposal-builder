@@ -315,14 +315,6 @@ export default function Index() {
               </div>
             </div>
           </div>
-          <div className="flex-shrink-0 hidden md:block">
-            <div className="w-[365px] h-[344px] relative">
-              <svg width="365" height="344" viewBox="0 0 365 344" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M165.529 231.215C148.726 154.055 68.3389 128.623 19.2399 137.471" stroke="black" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M307.001 83.0059C328.005 83.0059 347.752 88.3881 364.939 97.8467V308.857C347.752 318.316 328.005 323.699 307.001 323.699C240.535 323.699 186.654 269.818 186.654 203.353C186.654 136.887 240.535 83.0059 307.001 83.0059Z" fill="#5920CE"/>
-              </svg>
-            </div>
-          </div>
         </div>
 
         {/* Footer Disclaimer */}
