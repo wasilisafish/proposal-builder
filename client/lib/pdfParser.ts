@@ -3,7 +3,7 @@ import workerUrl from 'pdfjs-dist/build/pdf.worker.min?url';
 
 let workerSetupPromise: Promise<void> | null = null;
 
-// Initialize worker with multiple fallback CDNs
+// Initialize worker once with caching
 function initializeWorkerSetup(): Promise<void> {
   if (workerSetupPromise) {
     return workerSetupPromise;
