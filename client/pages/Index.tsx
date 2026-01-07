@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { type ExtractedInsuranceData } from '../lib/pdfParser';
+import { parsePDF, type ExtractedInsuranceData } from '../lib/pdfParser';
 
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedInsuranceData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -22,6 +24,19 @@ export default function Index() {
     }
 
     setUploadedFile(file);
+    setIsLoading(true);
+    setParseError(null);
+
+    try {
+      const data = await parsePDF(file);
+      setExtractedData(data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setParseError(message);
+      setExtractedData(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
