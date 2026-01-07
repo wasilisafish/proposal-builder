@@ -49,23 +49,27 @@ async function extractFieldsWithOpenAI(text: string): Promise<{ data: ExtractedP
     throw new Error('OPENAI_API_KEY not configured');
   }
 
-  const prompt = `Extract insurance policy details from the following document text. Return ONLY a valid JSON object with the following fields (use null for missing fields):
+  const prompt = `You are an insurance document analyzer. Extract policy details from this insurance document text.
+
+IMPORTANT: Return ONLY a valid JSON object, nothing else. No explanation, no markdown code blocks.
+
+Use this exact format. For missing values, use null (not empty string). Do not include any trailing commas.
 
 {
-  "deductible": "value as string (e.g., '$1,000')",
-  "dwelling": "value as string (e.g., '$378,380')",
-  "otherStructures": "value as string",
-  "personalProperty": "value as string",
-  "lossOfUse": "value as string",
-  "personalLiability": "value as string",
-  "medicalPayment": "value as string",
-  "annualPremium": "value as string (yearly premium)",
-  "policyStartDate": "date as string (e.g., '1/1/2024')",
-  "policyEndDate": "date as string"
+  "deductible": "$1000" or null,
+  "dwelling": "$378380" or null,
+  "otherStructures": "$72000" or null,
+  "personalProperty": "$138000" or null,
+  "lossOfUse": "$50000" or null,
+  "personalLiability": "$10000" or null,
+  "medicalPayment": "$5000" or null,
+  "annualPremium": "$2083.00" or null,
+  "policyStartDate": "1/1/2024" or null,
+  "policyEndDate": "12/31/2024" or null
 }
 
-Document text:
-${text}`;
+DOCUMENT TEXT:
+${text.substring(0, 4000)}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
