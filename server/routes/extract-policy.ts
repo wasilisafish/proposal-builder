@@ -161,8 +161,8 @@ router.post('/extract-policy', upload.single('pdf'), async (req: Request, res: R
       });
     }
 
-    // Extract structured fields using Claude
-    const { data, confidence, missing } = await extractFieldsWithClaude(extractedText);
+    // Extract structured fields using OpenAI
+    const { data, confidence, missing } = await extractFieldsWithOpenAI(extractedText);
 
     res.json({
       success: true,
