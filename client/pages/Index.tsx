@@ -308,29 +308,63 @@ export default function Index() {
             )}
 
             {/* Error State */}
-            {parseError && (
+            {parseError && !isLoading && (
               <div className="flex items-start gap-3 p-4 bg-[#FFE5E5] border border-[#FFB3B3] rounded">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
                   <circle cx="12" cy="12" r="10" stroke="#D32F2F" strokeWidth="2"/>
                   <path d="M12 8V12M12 16H12.01" stroke="#D32F2F" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-[#D32F2F]">Error parsing PDF</p>
+                  <p className="text-sm font-bold text-[#D32F2F]">Error extracting document</p>
                   <p className="text-xs text-[#D32F2F] mt-1">{parseError}</p>
+                  {parseError.includes('clearer') && (
+                    <p className="text-xs text-[#D32F2F] mt-2">Try uploading a clearer photo or higher resolution image.</p>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Success State */}
-            {uploadedFile && extractedData && !parseError && (
+            {uploadedFile && extractedData && extractedData.status !== 'failed' && !parseError && (
               <div className="flex items-start gap-3 p-4 bg-[#E5F2F1] border border-[#A5D6A7] rounded">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
                   <circle cx="12" cy="12" r="10" stroke="#2E7D32" strokeWidth="2"/>
                   <path d="M8 12L11 15L16 9" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
+                <div className="flex-1 flex justify-between items-start gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-[#2E7D32]">
+                      {extractedData.status === 'complete' ? 'Extraction Complete ✅' : 'Partial Extraction'}
+                    </p>
+                    <p className="text-xs text-[#2E7D32] mt-1">
+                      {extractedData.status === 'complete'
+                        ? `Successfully extracted data from ${uploadedFile.name}`
+                        : 'Some fields could not be extracted. Please review below.'}
+                    </p>
+                    {lastUpdated && (
+                      <p className="text-xs text-[#666] mt-2">Last updated: {lastUpdated}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleReplaceDocument}
+                    className="text-xs font-bold text-[#156EEA] hover:text-[#1257c7] whitespace-nowrap"
+                  >
+                    Replace document
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Partial/Missing Fields Warning */}
+            {extractedData && extractedData.status === 'partial' && extractedData.missingFields.length > 0 && (
+              <div className="flex items-start gap-3 p-4 bg-[#FFF3E0] border border-[#FFB74D] rounded">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                  <path d="M12 2L2 20h20L12 2z" stroke="#F57C00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 9v4M12 17h.01" stroke="#F57C00" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-[#2E7D32]">Extracted ✅</p>
-                  <p className="text-xs text-[#2E7D32] mt-1">Policy data extracted from {uploadedFile.name}. Read-only view below.</p>
+                  <p className="text-sm font-bold text-[#F57C00]">Some values couldn't be extracted</p>
+                  <p className="text-xs text-[#F57C00] mt-1">Please review the missing fields below and verify all information.</p>
                 </div>
               </div>
             )}
