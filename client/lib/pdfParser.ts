@@ -4,7 +4,7 @@ export interface FieldValue {
 }
 
 export interface ExtractionResponse {
-  status: 'complete' | 'partial' | 'failed';
+  status: "complete" | "partial" | "failed";
   document: {
     id: string;
     fileName: string;
@@ -36,17 +36,17 @@ export interface ExtractionResponse {
 
 export async function parseDocument(file: File): Promise<ExtractionResponse> {
   const formData = new FormData();
-  formData.append('pdf', file);
+  formData.append("pdf", file);
 
   try {
-    const response = await fetch('/api/extract-policy', {
-      method: 'POST',
+    const response = await fetch("/api/extract-policy", {
+      method: "POST",
       body: formData,
     });
 
     const result: ExtractionResponse = await response.json();
 
-    if (result.status === 'failed' && result.error) {
+    if (result.status === "failed" && result.error) {
       throw new Error(result.error);
     }
 
