@@ -265,7 +265,7 @@ export default function Index() {
               <label className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors">
                 <input
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
