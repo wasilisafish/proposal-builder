@@ -92,34 +92,60 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 }
 
 // Helper to call OpenAI API
-async function extractFieldsWithOpenAI(text: string): Promise<{ data: ExtractedPolicyData; confidence: Record<string, number>; missing: string[] }> {
+async function extractFieldsWithOpenAI(text: string): Promise<{
+  policy: { carrier?: FieldValue; effectiveDate?: FieldValue; expirationDate?: FieldValue };
+  coverages: {
+    dwelling?: FieldValue;
+    otherStructures?: FieldValue;
+    personalProperty?: FieldValue;
+    lossOfUse?: FieldValue;
+    liability?: FieldValue;
+    medPay?: FieldValue;
+    waterBackup?: FieldValue;
+    earthquake?: FieldValue;
+    moldPropertyDamage?: FieldValue;
+    moldLiability?: FieldValue;
+    deductible?: FieldValue;
+  };
+  missingFields: string[];
+  notes: string[];
+}> {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY not configured');
   }
 
-  const prompt = `You are an insurance document analyzer. Extract policy details from this insurance document text.
+  const prompt = `You are an expert insurance document analyzer. Extract all policy details from this insurance document text.
 
 IMPORTANT: Return ONLY a valid JSON object, nothing else. No explanation, no markdown code blocks.
 
-Use this exact format. For missing values, use null (not empty string). Do not include any trailing commas.
+For each field, provide:
+- value: The extracted value (string for text/dates, number for amounts, null if not found)
+- confidence: Your confidence score (0.0 to 1.0) in the extraction accuracy
 
+Use this exact format:
 {
-  "deductible": "$1000" or null,
-  "dwelling": "$378380" or null,
-  "otherStructures": "$72000" or null,
-  "personalProperty": "$138000" or null,
-  "lossOfUse": "$50000" or null,
-  "personalLiability": "$10000" or null,
-  "medicalPayment": "$5000" or null,
-  "annualPremium": "$2083.00" or null,
-  "policyStartDate": "1/1/2024" or null,
-  "policyEndDate": "12/31/2024" or null
+  "carrier": { "value": "Allstate", "confidence": 0.95 },
+  "effectiveDate": { "value": "2026-01-01", "confidence": 0.90 },
+  "expirationDate": { "value": "2027-01-01", "confidence": 0.90 },
+  "dwelling": { "value": 378380, "confidence": 0.95 },
+  "otherStructures": { "value": 72000, "confidence": 0.90 },
+  "personalProperty": { "value": 138000, "confidence": 0.90 },
+  "lossOfUse": { "value": 50000, "confidence": 0.85 },
+  "liability": { "value": 10000, "confidence": 0.80 },
+  "medPay": { "value": 5000, "confidence": 0.85 },
+  "deductible": { "value": 1000, "confidence": 0.95 },
+  "waterBackup": { "value": 10000, "confidence": 0.75 },
+  "earthquake": { "value": null, "confidence": 0.0 },
+  "moldPropertyDamage": { "value": null, "confidence": 0.0 },
+  "moldLiability": { "value": null, "confidence": 0.0 }
 }
 
-DOCUMENT TEXT:
-${text.substring(0, 4000)}`;
+If you find unusually low amounts (e.g., liability < $100,000 for HO3), include a note.
+
+DOCUMENT TEXT (first 5000 chars):
+${text.substring(0, 5000)}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -131,7 +157,7 @@ ${text.substring(0, 4000)}`;
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         temperature: 0,
-        max_tokens: 500,
+        max_tokens: 800,
         messages: [
           {
             role: 'user',
@@ -182,36 +208,70 @@ ${text.substring(0, 4000)}`;
       }
     }
 
-    // Extract data and confidence
-    const data: ExtractedPolicyData = {};
-    const confidence: Record<string, number> = {};
-    const missing: string[] = [];
+    // Extract structured data with confidence scores
+    const policy: { carrier?: FieldValue; effectiveDate?: FieldValue; expirationDate?: FieldValue } = {};
+    const coverages: {
+      dwelling?: FieldValue;
+      otherStructures?: FieldValue;
+      personalProperty?: FieldValue;
+      lossOfUse?: FieldValue;
+      liability?: FieldValue;
+      medPay?: FieldValue;
+      waterBackup?: FieldValue;
+      earthquake?: FieldValue;
+      moldPropertyDamage?: FieldValue;
+      moldLiability?: FieldValue;
+      deductible?: FieldValue;
+    } = {};
+    const missingFields: string[] = [];
+    const notes: string[] = [];
 
-    const fields = [
-      'deductible',
+    // Extract policy fields
+    const policyFields = ['carrier', 'effectiveDate', 'expirationDate'];
+    for (const field of policyFields) {
+      const fieldData = parsed[field];
+      if (fieldData && fieldData.value !== null && fieldData.value !== undefined) {
+        policy[field as keyof typeof policy] = {
+          value: fieldData.value,
+          confidence: fieldData.confidence || 0.8,
+        };
+      } else {
+        missingFields.push(field);
+      }
+    }
+
+    // Extract coverage fields
+    const coverageFields = [
       'dwelling',
       'otherStructures',
       'personalProperty',
       'lossOfUse',
-      'personalLiability',
-      'medicalPayment',
-      'annualPremium',
-      'policyStartDate',
-      'policyEndDate',
+      'liability',
+      'medPay',
+      'waterBackup',
+      'earthquake',
+      'moldPropertyDamage',
+      'moldLiability',
+      'deductible',
     ];
+    for (const field of coverageFields) {
+      const fieldData = parsed[field];
+      if (fieldData && fieldData.value !== null && fieldData.value !== undefined) {
+        coverages[field as keyof typeof coverages] = {
+          value: fieldData.value,
+          confidence: fieldData.confidence || 0.8,
+        };
 
-    for (const field of fields) {
-      const value = parsed[field];
-      if (value && value !== 'null' && value !== null) {
-        data[field] = value;
-        confidence[field] = 0.85;
+        // Add notes for unusual values
+        if (field === 'liability' && typeof fieldData.value === 'number' && fieldData.value < 100000) {
+          notes.push('Liability looks unusually low; verify.');
+        }
       } else {
-        missing.push(field);
-        confidence[field] = 0;
+        missingFields.push(field);
       }
     }
 
-    return { data, confidence, missing };
+    return { policy, coverages, missingFields, notes };
   } catch (error) {
     throw new Error(`Failed to extract fields: ${error instanceof Error ? error.message : String(error)}`);
   }
