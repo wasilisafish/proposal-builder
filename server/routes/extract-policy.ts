@@ -36,15 +36,8 @@ interface ExtractionResponse {
 // Helper to extract text from PDF
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    // Use dynamic import for pdf-parse to handle ESM/CJS compatibility
-    const pdfParseModule = await import('pdf-parse');
-    const pdfParse = pdfParseModule.default || pdfParseModule;
-
-    if (typeof pdfParse !== 'function') {
-      console.error('pdf-parse module type:', typeof pdfParse);
-      console.error('pdf-parse module keys:', Object.keys(pdfParseModule));
-      throw new Error('pdf-parse is not a function');
-    }
+    // Try using require for pdf-parse (works better with this package)
+    const pdfParse = require('pdf-parse');
 
     console.log('Parsing PDF, buffer size:', buffer.length);
     const data = await pdfParse(buffer);
