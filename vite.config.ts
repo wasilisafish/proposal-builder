@@ -30,9 +30,12 @@ function expressPlugin(): Plugin {
     apply: "serve", // Only apply during development (serve mode)
     async configureServer(server) {
       // Dynamic import only in dev mode to avoid build-time resolution issues
-      // Use path without extension - Vite/TypeScript will resolve it correctly
-      const { createServer } = await import("./server/index");
-      const app = createServer();
+      // Use a string literal to prevent static analysis during build
+      const serverModule = await import(
+        /* @vite-ignore */
+        "./server/index"
+      );
+      const app = serverModule.createServer();
 
       // Add Express app as middleware to Vite dev server
       server.middlewares.use(app);
