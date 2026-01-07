@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfParse from 'pdf-parse';
+// @ts-ignore - pdf-parse doesn't have proper types for ESM
+import pdfParse from 'pdf-parse/lib/pdf.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
