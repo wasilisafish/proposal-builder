@@ -30,18 +30,41 @@ interface ExtractionResponse {
 // Helper to extract text from PDF
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    // Try using require for pdf-parse (works better with this package)
-    const pdfParse = require('pdf-parse');
+    // Configure pdf.js worker for Node.js environment
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      // Use the embedded worker
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `file://${require.resolve('pdfjs-dist/build/pdf.worker.mjs')}`;
+    }
 
     console.log('Parsing PDF, buffer size:', buffer.length);
-    const data = await pdfParse(buffer);
-    console.log('PDF parsed successfully, text length:', data.text?.length || 0);
+    const pdf = await pdfjsLib.getDocument(buffer).promise;
 
-    if (!data.text || !data.text.trim()) {
+    let fullText = '';
+
+    // Extract text from all pages
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      try {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+
+        const pageText = (textContent.items || [])
+          .map((item: any) => item.str || '')
+          .join(' ');
+
+        fullText += pageText + ' ';
+      } catch (pageError) {
+        console.warn(`Could not extract text from page ${pageNum}`);
+      }
+    }
+
+    fullText = fullText.trim();
+
+    if (!fullText) {
       throw new Error('No text extracted from PDF');
     }
 
-    return data.text;
+    console.log('PDF parsed successfully, text length:', fullText.length);
+    return fullText;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('PDF parse error:', errorMsg, error);
