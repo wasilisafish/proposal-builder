@@ -41,12 +41,12 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   }
 }
 
-// Helper to call Claude API
-async function extractFieldsWithClaude(text: string): Promise<{ data: ExtractedPolicyData; confidence: Record<string, number>; missing: string[] }> {
-  const apiKey = process.env.CLAUDE_API_KEY;
-  
+// Helper to call OpenAI API
+async function extractFieldsWithOpenAI(text: string): Promise<{ data: ExtractedPolicyData; confidence: Record<string, number>; missing: string[] }> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
   if (!apiKey) {
-    throw new Error('CLAUDE_API_KEY not configured');
+    throw new Error('OPENAI_API_KEY not configured');
   }
 
   const prompt = `Extract insurance policy details from the following document text. Return ONLY a valid JSON object with the following fields (use null for missing fields):
@@ -64,22 +64,20 @@ async function extractFieldsWithClaude(text: string): Promise<{ data: ExtractedP
   "policyEndDate": "date as string"
 }
 
-Also estimate confidence (0-1) for each field found.
-
 Document text:
 ${text}`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1024,
+        model: 'gpt-4o-mini',
+        temperature: 0,
+        max_tokens: 500,
         messages: [
           {
             role: 'user',
@@ -91,24 +89,24 @@ ${text}`;
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Claude API error: ${response.status} - ${error}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${error}`);
     }
 
     const result = await response.json() as any;
-    const content = result.content?.[0]?.text;
-    
+    const content = result.choices?.[0]?.message?.content;
+
     if (!content) {
-      throw new Error('No response from Claude');
+      throw new Error('No response from OpenAI');
     }
 
     // Parse the JSON response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error('Could not parse JSON from Claude response');
+      throw new Error('Could not parse JSON from OpenAI response');
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
-    
+
     // Extract data and confidence
     const data: ExtractedPolicyData = {};
     const confidence: Record<string, number> = {};
@@ -131,7 +129,7 @@ ${text}`;
       const value = parsed[field];
       if (value && value !== 'null' && value !== null) {
         data[field] = value;
-        confidence[field] = parsed[`${field}_confidence`] || 0.85;
+        confidence[field] = 0.85;
       } else {
         missing.push(field);
         confidence[field] = 0;
