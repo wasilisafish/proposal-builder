@@ -279,8 +279,9 @@ export default function Index() {
 
               <label className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors">
                 <input
+                  id="file-upload"
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.jpg,.jpeg,.png,.heic"
                   onChange={handleFileUpload}
                   className="hidden"
                 />
@@ -291,7 +292,7 @@ export default function Index() {
                   <p className="text-sm font-bold text-black">
                     {uploadedFile ? uploadedFile.name : 'Click to upload or drag and drop'}
                   </p>
-                  <p className="text-xs font-medium text-[#666] mt-1">PDF (Max 10MB)</p>
+                  <p className="text-xs font-medium text-[#666] mt-1">PDF or image (JPG, PNG, HEIC) • Max 10MB</p>
                 </div>
               </label>
             </div>
