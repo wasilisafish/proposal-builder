@@ -366,9 +366,11 @@ export default function Index() {
                           <span className={`text-xs font-medium text-center rounded px-1 ${
                             extractedData[item.key] === item.presented
                               ? 'bg-[#E5F2F1] text-[#2E7D32]'
-                              : 'bg-[#FFE5E5] text-[#D32F2F]'
+                              : extractedData[item.key]
+                              ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                              : 'bg-[#F2F2F2] text-[#999]'
                           }`}>
-                            {extractedData[item.key]}
+                            {extractedData[item.key] || '—'}
                           </span>
                         </div>
                       </div>
@@ -390,9 +392,11 @@ export default function Index() {
                           <span className={`text-xs font-medium text-center rounded px-1 ${
                             extractedData[item.key] === item.presented
                               ? 'bg-[#E5F2F1] text-[#2E7D32]'
-                              : 'bg-[#FFE5E5] text-[#D32F2F]'
+                              : extractedData[item.key]
+                              ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                              : 'bg-[#F2F2F2] text-[#999]'
                           }`}>
-                            {extractedData[item.key]}
+                            {extractedData[item.key] || '—'}
                           </span>
                         </div>
                       </div>
