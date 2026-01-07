@@ -277,39 +277,183 @@ ${text.substring(0, 5000)}`;
   }
 }
 
-router.post('/extract-policy', upload.single('pdf'), async (req: Request, res: Response<ExtractionResponse>) => {
+// Helper to validate file type and size
+function validateFile(file: Express.Multer.File): { valid: boolean; error?: string } {
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  const allowedMimeTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/heic',
+  ];
+
+  if (file.size > maxSize) {
+    return {
+      valid: false,
+      error: 'File size exceeds 10MB limit',
+    };
+  }
+
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    return {
+      valid: false,
+      error: 'File type not supported. Please upload a PDF or image (JPG, PNG, HEIC).',
+    };
+  }
+
+  return { valid: true };
+}
+
+// Helper to extract text from image using OpenAI
+async function extractTextFromImage(buffer: Buffer, mimeType: string): Promise<string> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
+
+  const base64 = buffer.toString('base64');
+  const mediaType = mimeType as 'image/jpeg' | 'image/png' | 'image/heic';
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Extract all text from this insurance document image. Return the complete text content.',
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mediaType};base64,${base64}`,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+    }
+
+    const result = await response.json() as any;
+    const text = result.choices?.[0]?.message?.content;
+
+    if (!text) {
+      throw new Error('No text extracted from image');
+    }
+
+    return text;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to extract text from image: ${errorMsg}`);
+  }
+}
+
+router.post('/extract-policy', upload.single('pdf'), async (req: Request, res: Response) => {
   try {
     if (!req.file) {
       return res.status(400).json({
-        success: false,
-        error: 'No PDF file provided',
+        status: 'failed',
+        document: { id: '', fileName: '', uploadedAt: new Date().toISOString() },
+        policy: {},
+        coverages: {},
+        missingFields: [],
+        notes: [],
+        extractionId: '',
+        error: 'No file provided',
       });
     }
 
-    // Extract text from PDF
-    const extractedText = await extractTextFromPDF(req.file.buffer);
+    // Validate file
+    const validation = validateFile(req.file);
+    if (!validation.valid) {
+      return res.status(400).json({
+        status: 'failed',
+        document: { id: req.file.originalname, fileName: req.file.originalname, uploadedAt: new Date().toISOString() },
+        policy: {},
+        coverages: {},
+        missingFields: [],
+        notes: [],
+        extractionId: '',
+        error: validation.error,
+      });
+    }
+
+    const documentId = `doc_${Date.now()}`;
+    const uploadedAt = new Date().toISOString();
+
+    // Extract text based on file type
+    let extractedText: string;
+
+    if (req.file.mimetype === 'application/pdf') {
+      extractedText = await extractTextFromPDF(req.file.buffer);
+    } else if (req.file.mimetype.startsWith('image/')) {
+      extractedText = await extractTextFromImage(req.file.buffer, req.file.mimetype);
+    } else {
+      throw new Error('Unsupported file type');
+    }
 
     if (!extractedText.trim()) {
       return res.status(400).json({
-        success: false,
-        error: 'No text content found in PDF',
+        status: 'failed',
+        document: { id: documentId, fileName: req.file.originalname, uploadedAt },
+        policy: {},
+        coverages: {},
+        missingFields: [],
+        notes: ['No text content found in document. Try a clearer image.'],
+        extractionId: `extr_${Date.now()}`,
+        error: 'No text content found',
       });
     }
 
     // Extract structured fields using OpenAI
-    const { data, confidence, missing } = await extractFieldsWithOpenAI(extractedText);
+    const { policy, coverages, missingFields, notes: extractionNotes } = await extractFieldsWithOpenAI(extractedText);
+
+    // Determine overall status
+    const totalFields = Object.keys(coverages).length + Object.keys(policy).length;
+    const extractedFieldsCount = Object.keys(coverages).length - missingFields.length;
+    const status = extractedFieldsCount === 0 ? 'failed' : extractedFieldsCount < totalFields * 0.5 ? 'partial' : 'complete';
 
     res.json({
-      success: true,
-      data,
-      confidence,
-      missingFields: missing,
+      status,
+      document: {
+        id: documentId,
+        fileName: req.file.originalname,
+        uploadedAt,
+      },
+      policy,
+      coverages,
+      missingFields,
+      notes: extractionNotes,
+      extractionId: `extr_${Date.now()}`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Extraction error:', error);
     res.status(500).json({
-      success: false,
+      status: 'failed',
+      document: { id: '', fileName: '', uploadedAt: new Date().toISOString() },
+      policy: {},
+      coverages: {},
+      missingFields: [],
+      notes: [],
+      extractionId: '',
       error: message,
     });
   }
