@@ -3,42 +3,42 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-    fs: {
-      allow: ["./client", "./shared"],
-      deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
-    },
-  },
-  build: {
-    outDir: "dist/spa",
-  },
-  plugins: [react(), expressPlugin()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./client"),
-      "@shared": path.resolve(__dirname, "./shared"),
-    },
-  },
-}));
+export default defineConfig(({ mode }) => {
+  const plugins: Plugin[] = [react()];
+  
+  // Only add express plugin in dev mode to avoid build-time import issues
+  if (mode === "development") {
+    plugins.push({
+      name: "express-plugin",
+      apply: "serve",
+      async configureServer(server) {
+        // Dynamic import with string literal to prevent static analysis
+        const serverPath = "./server/index";
+        const serverModule = await import(serverPath);
+        const app = serverModule.createServer();
+        server.middlewares.use(app);
+      },
+    });
+  }
 
-function expressPlugin(): Plugin {
   return {
-    name: "express-plugin",
-    apply: "serve", // Only apply during development (serve mode)
-    async configureServer(server) {
-      // Dynamic import only in dev mode to avoid build-time resolution issues
-      // Use a string literal to prevent static analysis during build
-      const serverModule = await import(
-        /* @vite-ignore */
-        "./server/index"
-      );
-      const app = serverModule.createServer();
-
-      // Add Express app as middleware to Vite dev server
-      server.middlewares.use(app);
+    server: {
+      host: "::",
+      port: 8080,
+      fs: {
+        allow: ["./client", "./shared"],
+        deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
+      },
+    },
+    build: {
+      outDir: "dist/spa",
+    },
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./client"),
+        "@shared": path.resolve(__dirname, "./shared"),
+      },
     },
   };
-}
+});
