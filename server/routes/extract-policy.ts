@@ -29,6 +29,10 @@ interface ExtractionResponse {
 // Helper to extract text from PDF
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
+    // Dynamically import pdf-parse to handle ESM
+    const pdfParseModule = await import('pdf-parse/lib/index.mjs');
+    const pdfParse = pdfParseModule.default || pdfParseModule;
+
     const data = await pdfParse(buffer);
     return data.text || '';
   } catch (error) {
