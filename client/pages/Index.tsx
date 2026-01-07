@@ -1,35 +1,45 @@
 import { useState } from 'react';
-import { parsePDF, type ExtractedInsuranceData } from '../lib/pdfParser';
+import { parsePDF, type ExtractionResponse } from '../lib/pdfParser';
 
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [extractedData, setExtractedData] = useState<ExtractedInsuranceData | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractionResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     // Validate file type
-    if (file.type !== 'application/pdf') {
-      alert('Please upload a PDF file');
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/heic'];
+    if (!allowedTypes.includes(file.type)) {
+      setParseError('Please upload a PDF or image file (JPG, PNG, HEIC)');
       return;
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+      setParseError('File size must be less than 10MB');
       return;
     }
 
     setUploadedFile(file);
     setIsLoading(true);
     setParseError(null);
+    setExtractedData(null);
 
     try {
-      const data = await parsePDF(file);
-      setExtractedData(data);
+      const response = await parsePDF(file);
+      setExtractedData(response);
+      setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+
+      if (response.status === 'failed') {
+        setParseError(response.error || 'Failed to extract document data');
+      } else {
+        setParseError(null);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setParseError(message);
@@ -37,6 +47,11 @@ export default function Index() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleReplaceDocument = () => {
+    const input = document.getElementById('file-upload') as HTMLInputElement;
+    input?.click();
   };
 
   return (
