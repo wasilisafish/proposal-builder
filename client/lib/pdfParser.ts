@@ -1,26 +1,40 @@
-export interface ExtractedInsuranceData {
-  deductible?: string;
-  dwelling?: string;
-  otherStructures?: string;
-  personalProperty?: string;
-  lossOfUse?: string;
-  personalLiability?: string;
-  medicalPayment?: string;
-  annualPremium?: string;
-  policyStartDate?: string;
-  policyEndDate?: string;
-  [key: string]: string | undefined;
+export interface FieldValue {
+  value: string | number | null;
+  confidence: number;
 }
 
-export interface ExtractionResult {
-  success: boolean;
-  data?: ExtractedInsuranceData;
-  confidence?: Record<string, number>;
-  missingFields?: string[];
+export interface ExtractionResponse {
+  status: 'complete' | 'partial' | 'failed';
+  document: {
+    id: string;
+    fileName: string;
+    uploadedAt: string;
+  };
+  policy: {
+    carrier?: FieldValue;
+    effectiveDate?: FieldValue;
+    expirationDate?: FieldValue;
+  };
+  coverages: {
+    dwelling?: FieldValue;
+    otherStructures?: FieldValue;
+    personalProperty?: FieldValue;
+    lossOfUse?: FieldValue;
+    liability?: FieldValue;
+    medPay?: FieldValue;
+    waterBackup?: FieldValue;
+    earthquake?: FieldValue;
+    moldPropertyDamage?: FieldValue;
+    moldLiability?: FieldValue;
+    deductible?: FieldValue;
+  };
+  missingFields: string[];
+  notes: string[];
+  extractionId: string;
   error?: string;
 }
 
-export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
+export async function parseDocument(file: File): Promise<ExtractionResponse> {
   const formData = new FormData();
   formData.append('pdf', file);
 
@@ -30,19 +44,20 @@ export async function parsePDF(file: File): Promise<ExtractedInsuranceData> {
       body: formData,
     });
 
-    const result: ExtractionResult = await response.json();
+    const result: ExtractionResponse = await response.json();
 
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to extract policy data');
+    if (result.status === 'failed' && result.error) {
+      throw new Error(result.error);
     }
 
-    if (!result.data) {
-      throw new Error('No data extracted from PDF');
-    }
-
-    return result.data;
+    return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse PDF: ${message}`);
+    throw new Error(`Failed to parse document: ${message}`);
   }
+}
+
+// Legacy export for backward compatibility
+export async function parsePDF(file: File): Promise<ExtractionResponse> {
+  return parseDocument(file);
 }
