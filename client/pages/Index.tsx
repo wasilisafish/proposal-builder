@@ -342,8 +342,8 @@ export default function Index() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">$1,000</div>
-                      <div className={`p-2 rounded text-sm font-medium text-center ${extractedData.deductible !== '$1,000' ? 'bg-[#FFE5E5] text-[#D32F2F]' : 'bg-[#E5F2F1] text-[#2E7D32]'}`}>
-                        {extractedData.deductible}
+                      <div className={`p-2 rounded text-sm font-medium text-center ${extractedData.deductible && extractedData.deductible !== '$1,000' ? 'bg-[#FFE5E5] text-[#D32F2F]' : extractedData.deductible === '$1,000' ? 'bg-[#E5F2F1] text-[#2E7D32]' : 'bg-[#F2F2F2] text-[#999]'}`}>
+                        {extractedData.deductible || '—'}
                       </div>
                     </div>
                   </div>
