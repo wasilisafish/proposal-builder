@@ -305,6 +305,20 @@ export default function Index() {
               </div>
             )}
 
+            {/* Success State */}
+            {uploadedFile && extractedData && !parseError && (
+              <div className="flex items-start gap-3 p-4 bg-[#E5F2F1] border border-[#A5D6A7] rounded">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                  <circle cx="12" cy="12" r="10" stroke="#2E7D32" strokeWidth="2"/>
+                  <path d="M8 12L11 15L16 9" stroke="#2E7D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-[#2E7D32]">Extracted ✅</p>
+                  <p className="text-xs text-[#2E7D32] mt-1">Policy data extracted from {uploadedFile.name}. Read-only view below.</p>
+                </div>
+              </div>
+            )}
+
             {/* Comparison Display */}
             {extractedData && (
               <div className="flex flex-col gap-4">
