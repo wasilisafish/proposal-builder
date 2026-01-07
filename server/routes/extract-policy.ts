@@ -7,25 +7,39 @@ const require = createRequire(import.meta.url);
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-interface ExtractedPolicyData {
-  deductible?: string;
-  dwelling?: string;
-  otherStructures?: string;
-  personalProperty?: string;
-  lossOfUse?: string;
-  personalLiability?: string;
-  medicalPayment?: string;
-  annualPremium?: string;
-  policyStartDate?: string;
-  policyEndDate?: string;
-  [key: string]: string | undefined;
+interface FieldValue {
+  value: string | number | null;
+  confidence: number;
 }
 
 interface ExtractionResponse {
-  success: boolean;
-  data?: ExtractedPolicyData;
-  confidence?: Record<string, number>;
-  missingFields?: string[];
+  status: 'complete' | 'partial' | 'failed';
+  document: {
+    id: string;
+    fileName: string;
+    uploadedAt: string;
+  };
+  policy: {
+    carrier?: FieldValue;
+    effectiveDate?: FieldValue;
+    expirationDate?: FieldValue;
+  };
+  coverages: {
+    dwelling?: FieldValue;
+    otherStructures?: FieldValue;
+    personalProperty?: FieldValue;
+    lossOfUse?: FieldValue;
+    liability?: FieldValue;
+    medPay?: FieldValue;
+    waterBackup?: FieldValue;
+    earthquake?: FieldValue;
+    moldPropertyDamage?: FieldValue;
+    moldLiability?: FieldValue;
+    deductible?: FieldValue;
+  };
+  missingFields: string[];
+  notes: string[];
+  extractionId: string;
   error?: string;
 }
 
