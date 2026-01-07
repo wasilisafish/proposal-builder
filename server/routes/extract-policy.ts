@@ -99,13 +99,34 @@ ${text}`;
       throw new Error('No response from OpenAI');
     }
 
-    // Parse the JSON response
+    // Parse the JSON response with better error handling
+    let parsed: any;
+
+    // Try to extract and parse JSON from the response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error('Could not parse JSON from OpenAI response');
+      console.error('OpenAI response content:', content);
+      throw new Error('Could not find JSON in OpenAI response');
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (jsonError) {
+      // Try to fix common JSON issues
+      let cleanedJson = jsonMatch[0];
+
+      // Remove trailing commas
+      cleanedJson = cleanedJson.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
+      // Try parsing again
+      try {
+        parsed = JSON.parse(cleanedJson);
+      } catch (retryError) {
+        console.error('Failed to parse JSON:', cleanedJson);
+        console.error('Parse error:', retryError);
+        throw new Error(`Invalid JSON in OpenAI response: ${jsonError instanceof Error ? jsonError.message : String(jsonError)}`);
+      }
+    }
 
     // Extract data and confidence
     const data: ExtractedPolicyData = {};
