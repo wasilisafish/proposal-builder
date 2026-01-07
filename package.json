@@ -25,6 +25,7 @@
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "pdf-parse": "^2.4.5",
+    "pdf-poppler": "^0.2.3",
     "pdfjs-dist": "^5.4.530",
     "zod": "^3.25.76"
   },

@@ -14,6 +14,7 @@ export interface ExtractionResponse {
     carrier?: FieldValue;
     effectiveDate?: FieldValue;
     expirationDate?: FieldValue;
+    premium?: FieldValue;
   };
   coverages: {
     dwelling?: FieldValue;

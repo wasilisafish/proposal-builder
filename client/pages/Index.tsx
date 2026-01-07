@@ -1,5 +1,13 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { parsePDF, type ExtractionResponse } from "../lib/pdfParser";
+import * as Dialog from "@radix-ui/react-dialog";
+
+// Carrier logo mappings - add your logo URLs here
+const CARRIER_LOGOS: Record<string, string> = {
+  // Example: "foremost": "/logos/foremost.png",
+  // Example: "liberty oak": "/logos/liberty-oak.png",
+  // Add more carrier logos as needed
+};
 
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -9,6 +17,11 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -29,9 +42,9 @@ export default function Index() {
       return;
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setParseError("File size must be less than 10MB");
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setParseError("File size must be less than 50MB");
       return;
     }
 
@@ -50,14 +63,18 @@ export default function Index() {
         }),
       );
 
+      // Don't show error messages to user - just set data or leave as null
       if (response.status === "failed") {
-        setParseError(response.error || "Failed to extract document data");
+        setParseError(null); // Don't show errors to user
+        setExtractedData(null);
       } else {
         setParseError(null);
+        // Close modal after successful extraction
+        setModalOpen(false);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setParseError(message);
+      // Don't show error messages to user - silently fail
+      setParseError(null);
       setExtractedData(null);
     } finally {
       setIsLoading(false);
@@ -67,6 +84,198 @@ export default function Index() {
   const handleReplaceDocument = () => {
     const input = document.getElementById("file-upload") as HTMLInputElement;
     input?.click();
+  };
+
+  const handleDeletePolicy = () => {
+    setExtractedData(null);
+    setUploadedFile(null);
+    setLastUpdated(null);
+    setParseError(null);
+  };
+
+  // Camera functions
+  const startCamera = async () => {
+    console.log("startCamera function called");
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("Camera API not supported");
+        throw new Error("Camera API not supported in this browser");
+      }
+      console.log("Requesting camera access...");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      });
+      console.log("Camera access granted, setting up stream...");
+      streamRef.current = stream;
+      setIsCameraOpen(true);
+      setCapturedImage(null);
+      
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(err => {
+            console.error("Error playing video:", err);
+          });
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      let userMessage = "Unable to access camera.";
+      if (errorMessage.includes("Permission denied") || errorMessage.includes("NotAllowedError")) {
+        userMessage = "Camera permission denied. Please allow camera access in your browser settings and try again.";
+      } else if (errorMessage.includes("NotFoundError") || errorMessage.includes("no camera")) {
+        userMessage = "No camera found. Please ensure your device has a camera connected.";
+      } else if (errorMessage.includes("NotSupportedError") || errorMessage.includes("not supported")) {
+        userMessage = "Camera access is not supported in this browser. Please use a modern browser or try uploading a file instead.";
+      } else if (errorMessage.includes("NotReadableError")) {
+        userMessage = "Camera is already in use by another application. Please close other apps using the camera and try again.";
+      }
+      
+      setParseError(userMessage);
+      setIsCameraOpen(false);
+      
+      // Show error in an alert for better visibility
+      setTimeout(() => {
+        alert(userMessage + "\n\nTip: Make sure you're using HTTPS or localhost, and check your browser's camera permissions.");
+      }, 100);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        const imageDataUrl = canvas.toDataURL('image/jpeg');
+        setCapturedImage(imageDataUrl);
+        stopCamera();
+      }
+    }
+  };
+
+  const handleCapturedImage = async () => {
+    if (!capturedImage) return;
+
+    try {
+      // Convert data URL to File
+      const response = await fetch(capturedImage);
+      const blob = await response.blob();
+      const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
+
+      // Create a synthetic event for handleFileUpload
+      const syntheticEvent = {
+        target: {
+          files: [file],
+        },
+      } as React.ChangeEvent<HTMLInputElement>;
+
+      await handleFileUpload(syntheticEvent);
+      setCapturedImage(null);
+    } catch (error) {
+      console.error("Error processing captured image:", error);
+      setParseError("Error processing captured image");
+    }
+  };
+
+  // Cleanup camera stream when component unmounts or modal closes
+  useEffect(() => {
+    if (!modalOpen) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setIsCameraOpen(false);
+      setCapturedImage(null);
+    }
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
+  }, [modalOpen]);
+
+  // Normalize date to American format (MM/DD/YYYY) with leading zeros
+  const normalizeDate = (dateValue: string | number | null | undefined): string => {
+    if (!dateValue) return "Unknown";
+    
+    try {
+      const dateStr = String(dateValue);
+      
+      // If already in MM/DD/YYYY format, normalize to have leading zeros
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+        const [month, day, year] = dateStr.split('/');
+        return `${month.padStart(2, '0')}/${day.padStart(2, '0')}/${year}`;
+      }
+      
+      // If in YYYY-MM-DD format, convert to MM/DD/YYYY
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const [year, month, day] = dateStr.split('-');
+        return `${month}/${day}/${year}`;
+      }
+      
+      // Try parsing as Date object
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}/${day}/${year}`;
+      }
+      
+      return dateStr; // Return original if can't parse
+    } catch (error) {
+      return String(dateValue);
+    }
+  };
+
+  // Helper function to get numeric value from FieldValue
+  const getNumericValue = (fieldValue: { value: string | number | null; confidence: number } | undefined): number | null => {
+    if (!fieldValue || fieldValue.value === null || fieldValue.value === undefined) return null;
+    if (typeof fieldValue.value === "number") return fieldValue.value;
+    // Try to parse string values (remove $ and commas)
+    const parsed = parseFloat(String(fieldValue.value).replace(/[$,]/g, ""));
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  // Calculate premium difference compared to current policy
+  const calculatePremiumDifference = (): { amount: number; isCheaper: boolean } | null => {
+    if (!extractedData || extractedData.status === "failed" || !extractedData.policy.premium?.value) {
+      return null;
+    }
+    const proposedPremium = 1677.00;
+    const currentPremium = getNumericValue(extractedData.policy.premium);
+    if (currentPremium === null) return null;
+    
+    // Calculate difference: positive means proposed is more expensive, negative means cheaper
+    const difference = proposedPremium - currentPremium;
+    return {
+      amount: Math.abs(difference),
+      isCheaper: difference < 0, // Proposed is cheaper if difference is negative
+    };
   };
 
   return (
@@ -256,18 +465,29 @@ export default function Index() {
                   </span>
                 </div>
                 <span className="text-base font-medium leading-5 text-black text-right">
-                  $2,083.00
+                  $1,677.00
                 </span>
               </div>
 
+              {extractedData && extractedData.status !== "failed" && !isLoading && (() => {
+                const difference = calculatePremiumDifference();
+                if (difference && difference.isCheaper) {
+                  return (
               <div className="flex items-start justify-between">
-                <span className="text-base font-bold leading-5 text-[#2F8802]">
-                  Premium difference compared to current policy*
+                      <span className="text-base font-bold leading-5 text-[#10B981]">
+                        Savings
                 </span>
-                <span className="text-base font-bold leading-5 text-[#2F8802] text-right">
-                  $1,448.00
+                      <span className="text-base font-bold leading-5 text-[#10B981] text-right">
+                        ${difference.amount.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                 </span>
               </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             <div className="flex items-start gap-2 justify-between">
@@ -320,7 +540,7 @@ export default function Index() {
                 >
                   <path
                     d="M7 11.5L9.25 13L13 7"
-                    stroke="#2F8802"
+                    stroke="#10B981"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -329,7 +549,7 @@ export default function Index() {
                     cx="10"
                     cy="10"
                     r="7"
-                    stroke="#2F8802"
+                    stroke="#10B981"
                     strokeWidth="2"
                   />
                 </svg>
@@ -363,7 +583,8 @@ export default function Index() {
 
         {/* Home Insurance Details */}
         <div className="rounded-lg border border-[#E6E6E6] p-5 md:p-6 flex flex-col gap-5 mb-6">
-          <div className="flex flex-col gap-1 px-1">
+          <div className="flex justify-between items-start px-1">
+            <div className="flex flex-col gap-1">
             <h2 className="text-2xl font-bold leading-8 text-[#111827]">
               Home insurance details
             </h2>
@@ -371,196 +592,1059 @@ export default function Index() {
               12522 W Sunnyside Dr, El Mirage, AZ, 85335-6314
             </p>
           </div>
+            <Dialog.Root 
+              open={modalOpen} 
+              onOpenChange={(open) => {
+                // Allow closing the modal even during loading
+                setModalOpen(open);
+              }}
+            >
+              <Dialog.Trigger asChild>
+                <button 
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    "Compare to your current policy"
+                  )}
+                </button>
+              </Dialog.Trigger>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md z-50 shadow-xl">
+                  <Dialog.Title className="text-xl font-bold text-black mb-4">
+                Compare with your current policy
+                  </Dialog.Title>
+                  <Dialog.Description className="text-sm text-[#666] mb-6">
+                Upload your current policy's declaration page or take a picture and we'll extract
+                    the data to show you a side-by-side comparison with the proposed policy.
+                  </Dialog.Description>
+
+                  {isLoading ? (
+                    <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-2 border-[#156EEA] border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-sm font-bold text-black">
+                        Analyzing document...
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {/* Upload File Option */}
+                      <label className={`border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors`}>
+                        <input
+                          id="file-upload-modal"
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.heic"
+                          disabled={isLoading}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            
+                            // Start upload (modal will close after processing)
+                            const syntheticEvent = {
+                              ...e,
+                              target: e.target,
+                            } as React.ChangeEvent<HTMLInputElement>;
+                            await handleFileUpload(syntheticEvent);
+                          }}
+                          className="hidden"
+                        />
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M12 2V14M2 12H22M7 7L12 2L17 7"
+                            stroke="#666"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-black">
+                            Upload file
+                          </p>
+                          <p className="text-xs font-medium text-[#666] mt-1">
+                            PDF or image (JPG, PNG, HEIC) • Max 50MB
+                          </p>
+                        </div>
+                      </label>
+
+                      {/* Divider */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 h-px bg-[#D9D9D9]"></div>
+                        <span className="text-xs font-medium text-[#666]">OR</span>
+                        <div className="flex-1 h-px bg-[#D9D9D9]"></div>
+                      </div>
+
+                      {/* Take Picture Option */}
+                      {!isCameraOpen && !capturedImage ? (
+                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors w-full bg-transparent"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("Take picture div clicked, starting camera...");
+                            if (!isLoading) {
+                              startCamera();
+                            }
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            console.log("Mouse down on take picture button");
+                          }}
+                          style={{ 
+                            pointerEvents: isLoading ? 'none' : 'auto',
+                            cursor: isLoading ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 4H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z"
+                              stroke="#666"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z"
+                              stroke="#666"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-black">
+                              Take a picture
+                            </p>
+                            <p className="text-xs font-medium text-[#666] mt-1">
+                              Use your device camera to capture the declaration page
+                            </p>
+                          </div>
+                        </div>
+                      ) : isCameraOpen ? (
+                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-4 flex flex-col items-center gap-4">
+                          <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+                            <video
+                              ref={videoRef}
+                              autoPlay
+                              playsInline
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex gap-3 w-full">
+                            <button
+                              onClick={stopCamera}
+                              className="flex-1 px-4 py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={capturePhoto}
+                              className="flex-1 px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors"
+                            >
+                              Capture
+                            </button>
+                          </div>
+                        </div>
+                      ) : capturedImage ? (
+                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-4 flex flex-col items-center gap-4">
+                          <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+                            <img
+                              src={capturedImage}
+                              alt="Captured document"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="flex gap-3 w-full">
+                            <button
+                              onClick={() => {
+                                setCapturedImage(null);
+                                startCamera();
+                              }}
+                              className="flex-1 px-4 py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
+                            >
+                              Retake
+                            </button>
+                            <button
+                              onClick={handleCapturedImage}
+                              disabled={isLoading}
+                              className="flex-1 px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Use This Photo
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end mt-6">
+                    <Dialog.Close asChild>
+                      <button 
+                        disabled={isLoading}
+                        className="px-4 py-2 text-sm font-medium text-[#666] hover:text-black disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </Dialog.Close>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+            </div>
 
           <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-start px-1">
+
+            {/* Comparison Title */}
+            {extractedData && extractedData.status !== "failed" && (
+              <div className="px-4 py-2">
+                <h2 className="text-2xl font-bold text-black">Compare coverages</h2>
+              </div>
+            )}
+
+            {/* Carrier Comparison */}
+            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
-              <div className="w-[120px] h-[30px] bg-[#0A3066] flex items-center justify-center rounded">
-                <span className="text-white font-bold text-sm">FOREMOST</span>
-              </div>
-            </div>
+              {extractedData && extractedData.status !== "failed" ? (
+                <>
+                  {/* Proposed Carrier */}
+                  <div className="flex flex-col items-start">
+                    {(() => {
+                      const carrierName = "foremost";
+                      const logoUrl = CARRIER_LOGOS[carrierName];
+                      
+                      return (
+                        <>
+                          {logoUrl ? (
+                            <img 
+                              src={logoUrl} 
+                              alt="FOREMOST"
+                              className="max-h-[24px] object-contain mb-1"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent && !parent.querySelector('.carrier-text-fallback')) {
+                                  const span = document.createElement('span');
+                                  span.className = 'carrier-text-fallback text-black font-bold text-base';
+                                  span.textContent = 'FOREMOST';
+                                  parent.insertBefore(span, parent.firstChild);
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span className="text-black font-bold text-base">FOREMOST</span>
+                          )}
+                          <span className="text-sm font-semibold text-black mt-1">Proposed</span>
+                        </>
+                      );
+                    })()}
+                </div>
+                  {/* Current Carrier - with delete on hover */}
+                  <div className="flex flex-col items-start group relative">
+                    {extractedData.policy.carrier?.value ? (
+                      (() => {
+                        const carrierName = String(extractedData.policy.carrier.value).toLowerCase().trim();
+                        const logoUrl = CARRIER_LOGOS[carrierName];
+                        const displayName = extractedData.policy.carrier.value;
+                        
+                        return (
+                          <>
+                            {logoUrl ? (
+                              <img 
+                                src={logoUrl} 
+                                alt={displayName}
+                                className="max-h-[24px] object-contain mb-1"
+                                title={displayName}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent && !parent.querySelector('.carrier-text-fallback')) {
+                                    const span = document.createElement('span');
+                                    span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full';
+                                    span.textContent = displayName || 'Unknown';
+                                    span.title = displayName || 'Unknown';
+                                    parent.insertBefore(span, parent.firstChild);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span 
+                                className="text-black font-bold text-base truncate block w-full" 
+                                title={displayName}
+                              >
+                                {displayName}
+                              </span>
+                            )}
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm font-semibold text-black">Current</span>
+                              <button
+                                onClick={handleDeletePolicy}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Remove current policy comparison"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                                  className="text-[#666] hover:text-[#333]"
+                                >
+                    <path
+                                    d="M12 4L4 12M4 4l8 8"
+                                    stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                              </button>
+                    </div>
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <>
+                        <span 
+                          className="text-black font-bold text-base truncate block w-full" 
+                          title="Unknown"
+                        >
+                          Unknown
+                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm font-semibold text-black">Current</span>
+                    <button
+                            onClick={handleDeletePolicy}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove current policy comparison"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                              className="text-[#666] hover:text-[#333]"
+                  >
+                    <path
+                                d="M12 4L4 12M4 4l8 8"
+                                stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                          </button>
+                  </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-start">
+                  {(() => {
+                    const carrierName = "foremost";
+                    const logoUrl = CARRIER_LOGOS[carrierName];
+                    const displayName = "FOREMOST";
+                    
+                    return (
+                      <>
+                        {logoUrl ? (
+                          <img 
+                            src={logoUrl} 
+                            alt={displayName}
+                            className="max-h-[24px] object-contain mb-1"
+                            title={displayName}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent && !parent.querySelector('.carrier-text-fallback')) {
+                                const span = document.createElement('span');
+                                span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full';
+                                span.textContent = displayName;
+                                span.title = displayName;
+                                parent.insertBefore(span, parent.firstChild);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span 
+                            className="text-black font-bold text-base truncate block w-full" 
+                            title={displayName}
+                          >
+                            {displayName}
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold text-black mt-1">Proposed</span>
+                      </>
+                    );
+                  })()}
+                      </div>
+              )}
+                        </div>
 
             <div className="flex flex-col gap-5">
-              <div className="flex justify-between items-start px-1">
+              <div className="flex justify-between items-start px-4">
                 <span className="text-base font-bold leading-5 text-black">
                   Policy Basics
                 </span>
-              </div>
+                        </div>
 
               <div className="flex flex-col">
-                <div className="flex justify-between items-start px-1 py-2">
+                <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
                   <span className="text-base font-medium leading-5 text-black">
                     Policy Start Date
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    1/1/2026
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
+                        </span>
+                  {extractedData && extractedData.status !== "failed" ? (
+                    <>
+                      <span className="text-base font-medium leading-5 text-black text-right">
+                        01/01/2026
+                      </span>
+                      <span className="text-base font-medium leading-5 text-black text-right min-w-[160px]">
+                        {extractedData.policy.effectiveDate?.value 
+                          ? normalizeDate(extractedData.policy.effectiveDate.value)
+                          : "Unknown"}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-base font-medium leading-5 text-black">
+                      01/01/2026
+                          </span>
+                        )}
+                      </div>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
                   <span className="text-base font-medium leading-5 text-black">
                     Deductible
                   </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $1,000
-                  </span>
-                </div>
-              </div>
+                  {extractedData && extractedData.status !== "failed" ? (
+                    <>
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-base font-medium leading-5 text-black text-right flex-1">
+                          $1,000
+                        </span>
+                        <div className="flex-shrink-0 w-4">
+                          {(() => {
+                            const proposedDeductible = 1000;
+                            const currentDeductible = getNumericValue(extractedData.coverages.deductible);
+                            if (currentDeductible !== null) {
+                              if (proposedDeductible > currentDeductible) {
+                                // Proposed higher - red up arrow
+                                return (
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 4L12 10H4L8 4Z" fill="#EF4444" />
+                                  </svg>
+                                );
+                              } else if (proposedDeductible < currentDeductible) {
+                                // Proposed cheaper - green down arrow
+                                return (
+                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 12L4 6H12L8 12Z" fill="#10B981" />
+                                  </svg>
+                                );
+                              }
+                            }
+                            return null;
+                          })()}
+                        </div>
+                        </div>
+                      <span className="text-base font-medium leading-5 text-black text-right">
+                        {extractedData.coverages.deductible?.value
+                          ? `$${extractedData.coverages.deductible.value.toLocaleString()}`
+                          : "Unknown"}
+                        </span>
+                    </>
+                  ) : (
+                    <span className="text-base font-medium leading-5 text-black">
+                      $1,000
+                          </span>
+                        )}
+                      </div>
+                        </div>
 
-              <div className="flex justify-between items-start px-1">
+              <div className="flex justify-between items-start px-4 py-2">
                 <span className="text-base font-bold leading-5 text-black">
                   Standard coverages
                 </span>
-                <span className="text-base font-bold leading-5 text-black text-right">
-                  Coverage Limit
-                </span>
+                {extractedData && extractedData.status !== "failed" ? (
+                  <div className="grid gap-4" style={{ gridTemplateColumns: '160px 160px', display: 'grid' }}>
+                    {/* Empty space for alignment - headers are shown in carrier section */}
+                        </div>
+                ) : (
+                  <span className="text-base font-bold leading-5 text-black text-right">
+                    Coverage Limit
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-col">
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Dwelling
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $378,380
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Other structures
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $72,000
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Personal property
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $138,000
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Loss of use
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $50,000
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Personal liability
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $10,000
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Medical payment (to others)
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $5,000
-                  </span>
-                </div>
-              </div>
+                {[
+                  { label: "Dwelling", value: 460000, key: "dwelling" },
+                  { label: "Other structures", value: 46000, key: "otherStructures" },
+                  { label: "Personal property", value: 322000, key: "personalProperty" },
+                  { label: "Loss of use", value: 92000, key: "lossOfUse" },
+                  { label: "Personal liability", value: 300000, key: "liability" },
+                  { label: "Medical payment (to others)", value: 5000, key: "medPay" },
+                    ].map((item, idx) => {
+                  const currentValue = extractedData && extractedData.status !== "failed"
+                    ? extractedData.coverages[item.key as keyof typeof extractedData.coverages]
+                    : null;
+                  
+                  // Check if this coverage is explicitly excluded in notes
+                  const isExcluded = extractedData && extractedData.status !== "failed" && extractedData.notes?.some(note => {
+                    const noteLower = note.toLowerCase();
+                    const coverageName = item.label.toLowerCase();
+                    // Check for exclusion patterns with the coverage name
+                    return (noteLower.includes('excluded') || noteLower.includes('not covered') || noteLower.includes('not included')) && 
+                           (noteLower.includes(coverageName.split(' ')[0]) || // e.g., "earthquake", "flood", or "mold"
+                            noteLower.includes(item.key.toLowerCase()) ||
+                            (item.key === 'earthquake' && (noteLower.includes('earthquake') || noteLower.includes('seismic'))) ||
+                            (item.key === 'flood' && noteLower.includes('flood')) ||
+                            (item.key === 'moldPropertyDamage' && noteLower.includes('mold')) ||
+                            (item.key === 'moldLiability' && noteLower.includes('mold')));
+                  }) || false;
 
-              <div className="px-1">
+                      return (
+                        <div
+                          key={item.key}
+                      className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3 ${idx % 2 === 0 ? "bg-[#F2F2F2]" : ""}`}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}
+                        >
+                      <span className="text-base font-medium leading-5 text-black">
+                              {item.label}
+                            </span>
+                      {extractedData && extractedData.status !== "failed" ? (
+                        <>
+                          <div className="flex items-center justify-end gap-2">
+                            <span className="text-base font-medium leading-5 text-black text-right flex-1">
+                              ${item.value.toLocaleString()}
+                              </span>
+                            <div className="flex-shrink-0 w-4">
+                              {(() => {
+                                const currentNum = getNumericValue(currentValue);
+                                if (currentNum !== null && item.value > currentNum) {
+                                  // Proposed higher - green up arrow
+                                  return (
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M8 4L12 10H4L8 4Z" fill="#10B981" />
+                                    </svg>
+                                  );
+                                } else if (currentNum !== null && item.value < currentNum) {
+                                  // Proposed lower - orange down arrow
+                                  return (
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M8 12L4 6H12L8 12Z" fill="#F97316" />
+                                    </svg>
+                                  );
+                                }
+                                return null;
+                              })()}
+                          </div>
+                          </div>
+                          <span className="text-base font-medium leading-5 text-black text-right">
+                            {currentValue?.value
+                              ? typeof currentValue.value === "number"
+                                ? `$${currentValue.value.toLocaleString()}`
+                                : `$${currentValue.value}`
+                              : "Unknown"}
+                            </span>
+                        </>
+                      ) : (
+                        <span className="text-base font-medium leading-5 text-black">
+                          ${item.value.toLocaleString()}
+                            </span>
+                      )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+              <div className="px-4 py-2">
                 <span className="text-base font-bold leading-5 text-black">
                   Additional coverages
-                </span>
+                    </span>
               </div>
 
               <div className="flex flex-col">
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Water back-up
-                  </span>
-                  <span className="text-base font-medium leading-5 text-black">
-                    $10,000
-                  </span>
+                {[
+                  { label: "Water back-up", value: 10000, key: "waterBackup", isIncluded: true },
+                  { label: "Earthquake coverage", value: null, key: "earthquake", isIncluded: false },
+                  { label: "Flood coverage", value: null, key: "flood", isIncluded: false },
+                  { label: "Mold property damage", value: null, key: "moldPropertyDamage", isIncluded: false },
+                  { label: "Mold liability", value: null, key: "moldLiability", isIncluded: false },
+                    ].map((item, idx) => {
+                  const currentValue = extractedData && extractedData.status !== "failed"
+                    ? extractedData.coverages[item.key as keyof typeof extractedData.coverages]
+                    : null;
+                  
+                  // Check if this coverage is explicitly excluded in notes or document
+                  const isExcluded = extractedData && extractedData.status !== "failed" && (() => {
+                    // First check notes for explicit exclusions
+                    const hasExclusionInNotes = extractedData.notes?.some(note => {
+                      const noteLower = note.toLowerCase();
+                      const coverageName = item.label.toLowerCase();
+                      // Check for exclusion patterns with the coverage name
+                      return (noteLower.includes('excluded') || noteLower.includes('not covered') || noteLower.includes('not included') || 
+                              noteLower.includes('does not insure') || noteLower.includes('does not cover')) && 
+                             (noteLower.includes(coverageName.split(' ')[0]) || // e.g., "earthquake", "flood", or "mold"
+                              noteLower.includes(item.key.toLowerCase()) ||
+                              (item.key === 'earthquake' && (noteLower.includes('earthquake') || noteLower.includes('seismic'))) ||
+                              (item.key === 'flood' && noteLower.includes('flood')) ||
+                              (item.key === 'moldPropertyDamage' && noteLower.includes('mold')) ||
+                              (item.key === 'moldLiability' && noteLower.includes('mold')));
+                    });
+                    
+                    // Also check if coverage value is null AND there's any mention of exclusion in carrier/policy context
+                    // This catches cases where exclusion is mentioned in the document but not explicitly in notes
+                    if (!hasExclusionInNotes && (!currentValue?.value || currentValue.value === null)) {
+                      // Check all coverage values and carrier name for exclusion context
+                      const allCoverageValues = Object.values(extractedData.coverages || {})
+                        .map(cov => String(cov?.value || ''))
+                        .join(' ');
+                      const carrierName = String(extractedData.policy.carrier?.value || '');
+                      const allNotes = (extractedData.notes || []).join(' ');
+                      const allText = `${allCoverageValues} ${carrierName} ${allNotes}`.toLowerCase();
+                      
+                      const coverageKeywords = item.key === 'flood' ? ['flood'] :
+                                               item.key === 'earthquake' ? ['earthquake', 'seismic'] :
+                                               item.key === 'moldPropertyDamage' || item.key === 'moldLiability' ? ['mold'] :
+                                               [item.key.toLowerCase()];
+                      
+                      // Check if coverage keyword is mentioned with exclusion language
+                      const hasExclusionLanguage = allText.includes('excluded') || 
+                                                    allText.includes('not covered') || 
+                                                    allText.includes('not included') ||
+                                                    allText.includes('does not insure') ||
+                                                    allText.includes('does not cover');
+                      
+                      const hasCoverageKeyword = coverageKeywords.some(keyword => allText.includes(keyword));
+                      
+                      // If exclusion language exists AND coverage keyword is mentioned, and value is null, it's likely excluded
+                      return hasExclusionLanguage && hasCoverageKeyword;
+                    }
+                    
+                    return hasExclusionInNotes || false;
+                  })() || false;
+
+                      return (
+                        <div
+                          key={item.key}
+                      className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3 ${idx % 2 === 1 ? "bg-[#F2F2F2]" : ""}`}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}
+                        >
+                      <span className="text-base font-medium leading-5 text-black">
+                              {item.label}
+                            </span>
+                      {extractedData && extractedData.status !== "failed" ? (
+                        <>
+                          <div className="flex items-center justify-end gap-2 min-w-[160px]">
+                            <span className={`text-base font-medium leading-5 text-right flex-1 ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
+                              {item.isIncluded ? `$${item.value?.toLocaleString()}` : "Not Included"}
+                              </span>
+                            <div className="flex-shrink-0 w-4">
+                              {(() => {
+                                // If explicitly excluded, don't show comparison icons
+                                if (isExcluded) {
+                                  return null;
+                                }
+                                
+                                const currentIsIncluded = currentValue?.value && typeof currentValue.value === "number";
+                                const currentIsUnknown = !currentValue?.value || currentValue.value === "Unknown";
+                                const proposedValue = item.isIncluded ? item.value : null;
+                                const currentNum = getNumericValue(currentValue);
+                                
+                                // If both have numeric values, compare amounts
+                                if (proposedValue !== null && typeof proposedValue === "number" && currentNum !== null) {
+                                  if (proposedValue < currentNum) {
+                                    // Proposed lower - red down arrow
+                                    return (
+                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
+                                        <path d="M8 12L4 6H12L8 12Z" fill="#EF4444" />
+                                      </svg>
+                                    );
+                                  } else if (proposedValue > currentNum) {
+                                    // Proposed higher - green up arrow
+                                    return (
+                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
+                                        <path d="M8 4L12 10H4L8 4Z" fill="#10B981" />
+                                      </svg>
+                                    );
+                                  }
+                                }
+                                
+                                // Fallback to inclusion/exclusion logic
+                                if (item.isIncluded && !currentIsIncluded && !currentIsUnknown && !isExcluded) {
+                                  // Proposed included, current not - green checkmark
+                                  return (
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
+                                      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  );
+                                } else if (!item.isIncluded && currentIsIncluded) {
+                                  // Proposed not included, current included - red X
+                                  return (
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
+                                      <path d="M12 4L4 12M4 4l8 8" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  );
+                                }
+                                return null;
+                              })()}
+                          </div>
+                          </div>
+                          <span className={`text-base font-medium leading-5 text-right min-w-[160px] ${
+                            (() => {
+                              // If explicitly excluded, show as "Not Included" in gray
+                              if (isExcluded) {
+                                return "text-[#666]";
+                              }
+                              const currentIsIncluded = currentValue?.value && typeof currentValue.value === "number";
+                              const currentIsUnknown = !currentValue?.value || currentValue.value === "Unknown";
+                              
+                              if (currentIsUnknown) {
+                                return "text-black"; // Black: unknown
+                              }
+                              return currentValue?.value && typeof currentValue.value === "number" ? "text-black" : "text-[#666]";
+                            })()
+                          }`}>
+                            {isExcluded 
+                              ? "Not Included"
+                              : currentValue?.value
+                                ? typeof currentValue.value === "number"
+                                  ? `$${currentValue.value.toLocaleString()}`
+                                  : currentValue.value === null || currentValue.value === "Not Included"
+                                    ? "Not Included"
+                                    : `$${currentValue.value}`
+                                : "Unknown"}
+                            </span>
+                        </>
+                      ) : (
+                        <span className={`text-base font-medium leading-5 min-w-[160px] ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
+                          {item.isIncluded ? `$${item.value?.toLocaleString()}` : "Not Included"}
+                            </span>
+                      )}
+                        </div>
+                      );
+                    })}
                 </div>
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Earthquake coverage
-                  </span>
-                  <span className="text-base font-medium leading-5 text-[#666]">
-                    Not Included
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Mold property damage
-                  </span>
-                  <span className="text-base font-medium leading-5 text-[#666]">
-                    Not Included
-                  </span>
-                </div>
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
-                    Mold liability
-                  </span>
-                  <span className="text-base font-medium leading-5 text-[#666]">
-                    Not Included
-                  </span>
-                </div>
+
+              {/* Informational box for additional coverage opportunities - only show if detected in current policy */}
+              {extractedData && extractedData.status !== "failed" && !isLoading && (() => {
+                try {
+                  // Check ALL coverage values and notes for exclusion keywords
+                  const allCoverageValues = Object.values(extractedData.coverages || {})
+                    .map(cov => String(cov?.value || ''))
+                    .join(' ');
+                  const carrierName = String(extractedData.policy.carrier?.value || '');
+                  const allNotes = (extractedData.notes || []).join(' ');
+                  const allText = `${allCoverageValues} ${carrierName} ${allNotes}`.toLowerCase();
+                  
+                  // Debug: Log extracted data to see what we're working with
+                  console.log("Extracted data for detection:", {
+                    notes: extractedData.notes,
+                    coverages: extractedData.coverages,
+                    carrier: extractedData.policy.carrier?.value,
+                    effectiveDate: extractedData.policy.effectiveDate?.value,
+                    expirationDate: extractedData.policy.expirationDate?.value,
+                    premium: extractedData.policy.premium?.value,
+                    allText: allText.substring(0, 500) // First 500 chars for debugging
+                  });
+                
+                // Check for explicit exclusions
+                const hasExclusionKeywords = (text: string) => {
+                  const exclusionPatterns = [
+                    'excluded', 'not covered', 'not included', 'not provided',
+                    'exclusion', 'excludes', 'does not cover', 'no coverage',
+                    'coverage excluded', 'not applicable', 'n/a', 'na'
+                  ];
+                  return exclusionPatterns.some(pattern => text.includes(pattern));
+                };
+                
+                // Check earthquake - ONLY if INCLUDED with a numeric value, NOT if excluded
+                const earthquakeValue = extractedData.coverages.earthquake?.value;
+                const earthquakeText = allText.includes('earthquake') ? 
+                  allText.substring(Math.max(0, allText.indexOf('earthquake') - 50), allText.indexOf('earthquake') + 100) : '';
+                const currentHasEarthquake = 
+                  earthquakeValue && 
+                  typeof earthquakeValue === "number" && 
+                  earthquakeValue > 0 &&
+                  !hasExclusionKeywords(earthquakeText);
+                
+                // Check flood - ONLY if INCLUDED with a numeric value, NOT if excluded
+                const floodValue = extractedData.coverages.flood?.value;
+                const floodText = allText.includes('flood') ? 
+                  allText.substring(Math.max(0, allText.indexOf('flood') - 50), allText.indexOf('flood') + 100) : '';
+                const currentHasFlood = 
+                  floodValue && 
+                  typeof floodValue === "number" && 
+                  floodValue > 0 &&
+                  !hasExclusionKeywords(floodText);
+                
+                // SIMPLIFIED LOGIC: Check if jewelry, scheduled personal property, or floater are mentioned AND included
+                
+                // Helper function to check if a coverage is mentioned and included (not excluded)
+                const isCoverageIncluded = (coverageKeywords: string[], contextText?: string): boolean => {
+                  // Check if any keyword is mentioned in the document
+                  const isMentioned = coverageKeywords.some(keyword => 
+                    allText.includes(keyword.toLowerCase()) ||
+                    extractedData.notes?.some(note => note.toLowerCase().includes(keyword.toLowerCase()))
+                  );
+                  
+                  if (!isMentioned) return false;
+                  
+                  // Get context around the mention to check for exclusions
+                  const keywordFound = coverageKeywords.find(keyword => 
+                    allText.includes(keyword.toLowerCase())
+                  );
+                  
+                  if (!keywordFound) {
+                    // Check notes instead
+                    const noteWithKeyword = extractedData.notes?.find(note => 
+                      coverageKeywords.some(kw => note.toLowerCase().includes(kw.toLowerCase()))
+                    );
+                    if (noteWithKeyword) {
+                      return !hasExclusionKeywords(noteWithKeyword.toLowerCase());
+                    }
+                    return false;
+                  }
+                  
+                  // Get context text around the keyword
+                  const keywordIndex = allText.indexOf(keywordFound.toLowerCase());
+                  const context = contextText || 
+                    allText.substring(Math.max(0, keywordIndex - 100), keywordIndex + 200);
+                  
+                  // Check if it's excluded in the context
+                  return !hasExclusionKeywords(context);
+                };
+                
+                // Check for jewelry (including scheduled personal property - jewelry)
+                const jewelryKeywords = ['jewelry', 'jewellery', 'scheduled personal property', 'scheduled property'];
+                const jewelryContext = allText.includes('jewelry') || allText.includes('jewellery') ?
+                  allText.substring(Math.max(0, Math.max(
+                    allText.indexOf('jewelry') > -1 ? allText.indexOf('jewelry') : 0,
+                    allText.indexOf('jewellery') > -1 ? allText.indexOf('jewellery') : 0
+                  ) - 100), Math.max(
+                    allText.indexOf('jewelry') > -1 ? allText.indexOf('jewelry') + 200 : allText.length,
+                    allText.indexOf('jewellery') > -1 ? allText.indexOf('jewellery') + 200 : allText.length
+                  )) : '';
+                
+                // Check if jewelry is mentioned AND included (not excluded)
+                const jewelryIsMentioned = allText.includes('jewelry') || 
+                                          allText.includes('jewellery') ||
+                                          extractedData.notes?.some(note => 
+                                            note.toLowerCase().includes('jewelry') || 
+                                            note.toLowerCase().includes('jewellery')
+                                          );
+                
+                const jewelryIsIncluded = jewelryIsMentioned && (
+                  (extractedData.coverages.jewelry?.value && typeof extractedData.coverages.jewelry.value === "number" && extractedData.coverages.jewelry.value > 0) ||
+                  isCoverageIncluded(['jewelry', 'jewellery', 'scheduled personal property'], jewelryContext)
+                );
+                
+                // Check for scheduled personal property (general, not just jewelry)
+                const scheduledPropertyKeywords = ['scheduled personal property', 'scheduled property', 'scheduled personal', 'scheduled items'];
+                const scheduledPropertyContext = allText.includes('scheduled') ?
+                  allText.substring(Math.max(0, allText.indexOf('scheduled') - 50), allText.indexOf('scheduled') + 200) : '';
+                
+                const scheduledPropertyIsMentioned = scheduledPropertyKeywords.some(keyword => 
+                  allText.includes(keyword.toLowerCase()) ||
+                  extractedData.notes?.some(note => note.toLowerCase().includes(keyword.toLowerCase()))
+                );
+                
+                const scheduledPropertyIsIncluded = scheduledPropertyIsMentioned && 
+                  isCoverageIncluded(scheduledPropertyKeywords, scheduledPropertyContext);
+                
+                // Check for floater/PAF (Personal Articles Floater)
+                const floaterKeywords = ['floater', 'paf', 'personal articles floater', 'scheduled personal property'];
+                const floaterContext = allText.includes('floater') || allText.includes('paf') ?
+                  allText.substring(Math.max(0, Math.max(
+                    allText.indexOf('floater') > -1 ? allText.indexOf('floater') : 0,
+                    allText.indexOf('paf') > -1 ? allText.indexOf('paf') : 0
+                  ) - 50), Math.max(
+                    allText.indexOf('floater') > -1 ? allText.indexOf('floater') + 150 : allText.length,
+                    allText.indexOf('paf') > -1 ? allText.indexOf('paf') + 150 : allText.length
+                  )) : '';
+                
+                const floaterIsMentioned = floaterKeywords.some(keyword => 
+                  allText.includes(keyword.toLowerCase()) ||
+                  extractedData.notes?.some(note => note.toLowerCase().includes(keyword.toLowerCase()))
+                );
+                
+                const floaterIsIncluded = floaterIsMentioned && 
+                  isCoverageIncluded(floaterKeywords, floaterContext);
+                
+                // Check for electronic devices coverage
+                const electronicKeywords = ['electronic', 'electronics', 'electronic device', 'electronic devices', 
+                                          'computer', 'computers', 'laptop', 'laptops', 'tablet', 'tablets', 
+                                          'smartphone', 'smartphones', 'phone', 'phones', 'camera', 'cameras',
+                                          'television', 'tv', 'televisions', 'tvs'];
+                const electronicContext = electronicKeywords.some(keyword => allText.includes(keyword.toLowerCase())) ?
+                  allText.substring(Math.max(0, Math.max(...electronicKeywords.map(kw => 
+                    allText.indexOf(kw.toLowerCase()) > -1 ? allText.indexOf(kw.toLowerCase()) : 0
+                  ).filter(idx => idx > 0)) - 50), Math.max(...electronicKeywords.map(kw => 
+                    allText.indexOf(kw.toLowerCase()) > -1 ? allText.indexOf(kw.toLowerCase()) + 150 : allText.length
+                  ).filter(idx => idx < allText.length))) : '';
+                
+                const electronicIsMentioned = electronicKeywords.some(keyword => 
+                  allText.includes(keyword.toLowerCase()) ||
+                  extractedData.notes?.some(note => note.toLowerCase().includes(keyword.toLowerCase()))
+                );
+                
+                const electronicIsIncluded = electronicIsMentioned && 
+                  isCoverageIncluded(electronicKeywords, electronicContext);
+                
+                // Set flags for promotion
+                const currentHasJewelry = jewelryIsIncluded;
+                const hasJewelryMention = jewelryIsMentioned && jewelryIsIncluded;
+                const hasScheduledProperty = scheduledPropertyIsIncluded;
+                const currentHasPAF = floaterIsIncluded;
+                const currentHasElectronic = electronicIsIncluded;
+                
+                // Also check carrier name or notes for flood mentions - but only if not excluded
+                const hasFloodMention = 
+                  (extractedData.notes?.some(note => note.toLowerCase().includes('flood')) || 
+                   String(extractedData.policy.carrier?.value || '').toLowerCase().includes('flood')) &&
+                  !hasExclusionKeywords(floodText);
+                
+                // SIMPLIFIED: Show promotional section if coverage is mentioned AND included (not excluded)
+                // Check what's in PROPOSED policy (for comparison, but promotion shows if included in current)
+                const proposedHasEarthquake = false; // Earthquake is not included in proposed
+                const proposedHasFlood = false; // Flood is not included in proposed
+                const proposedHasJewelry = false; // Jewelry is not included in proposed
+                
+                // Show promotional section if:
+                // 1. Coverage is mentioned in CURRENT policy
+                // 2. Coverage is INCLUDED (not excluded) in CURRENT policy
+                // 3. Coverage does NOT exist in PROPOSED policy (optional - for comparison)
+                const shouldPromoteEarthquake = currentHasEarthquake && !proposedHasEarthquake;
+                const shouldPromoteFlood = (currentHasFlood || hasFloodMention) && !proposedHasFlood;
+                const shouldPromoteJewelry = (currentHasJewelry || hasJewelryMention || hasScheduledProperty) && !proposedHasJewelry;
+                const shouldPromotePAF = currentHasPAF;
+                const shouldPromoteElectronic = currentHasElectronic;
+                
+                // Debug: Log detection results
+                console.log("Detection results:", {
+                  jewelryIsMentioned,
+                  jewelryIsIncluded,
+                  scheduledPropertyIsMentioned,
+                  scheduledPropertyIsIncluded,
+                  floaterIsMentioned,
+                  floaterIsIncluded,
+                  currentHasJewelry,
+                  hasJewelryMention,
+                  hasScheduledProperty,
+                  currentHasPAF,
+                  shouldPromoteJewelry
+                });
+                
+                // Show promotional section if coverage is INCLUDED in current policy
+                if (shouldPromoteEarthquake || shouldPromoteFlood || shouldPromoteJewelry || shouldPromotePAF || shouldPromoteElectronic) {
+                  const coverages = [];
+                  const opportunities = [];
+                  
+                  if (shouldPromoteEarthquake) coverages.push("Earthquake");
+                  if (shouldPromoteFlood) coverages.push("Flood");
+                  
+                  // Determine what opportunities to promote based on what's included
+                  if (shouldPromoteJewelry) {
+                    // Check if jewelry is specifically mentioned (including in scheduled property context)
+                    if (jewelryIsIncluded || (hasScheduledProperty && jewelryIsMentioned)) {
+                      opportunities.push("Jewelry");
+                    } else if (scheduledPropertyIsIncluded) {
+                      opportunities.push("Scheduled Personal Property");
+                    }
+                  }
+                  
+                  // Add PAF if included
+                  if (shouldPromotePAF) {
+                    opportunities.push("Personal Articles Floater (PAF)");
+                  }
+                  
+                  // Add electronic devices if included
+                  if (shouldPromoteElectronic) {
+                    opportunities.push("Electronic Devices");
+                  }
+                  
+                  return (
+                    <div className="mx-4 mt-4 p-4 bg-[#EFF6FF] border border-[#3B82F6] rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                          <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M10 6V10M10 14H10.01" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <div className="flex-1">
+                          <h3 className="text-sm font-semibold text-[#1E40AF] mb-1">
+                            Consider Additional Coverage
+                          </h3>
+                          <p className="text-sm text-[#1E3A8A] leading-relaxed">
+                            {(() => {
+                              let message = "";
+                              
+                              // Add coverage recommendations
+                              if (coverages.length > 0) {
+                                message += `${coverages.join(", ")} coverage${coverages.length > 1 ? "s" : ""} can provide important protection for your property. `;
+                              }
+                              
+                              // Add insurance opportunities (scheduled property, jewelry, PAF, or electronic devices)
+                              if (opportunities.length > 0) {
+                                const isJewelry = opportunities.includes("Jewelry");
+                                const isPAF = opportunities.includes("Personal Articles Floater (PAF)");
+                                const isElectronic = opportunities.includes("Electronic Devices");
+                                
+                                if (isJewelry) {
+                                  message += `We noticed you have jewelry coverage in your current policy. This represents an insurance opportunity - consider a dedicated jewelry insurance policy for comprehensive protection of your valuable items beyond your standard coverage limits. `;
+                                } else if (isPAF) {
+                                  message += `We noticed you have Personal Articles Floater (PAF) coverage in your current policy. This represents an insurance opportunity - consider a dedicated floater policy for comprehensive protection of your valuable items beyond your standard coverage limits. `;
+                                } else if (isElectronic) {
+                                  message += `We noticed you have electronic devices coverage in your current policy. This represents an insurance opportunity - consider a dedicated electronics insurance policy for comprehensive protection of your devices (computers, laptops, tablets, smartphones, cameras, TVs, etc.) beyond your standard coverage limits. `;
+                                } else {
+                                  message += `We noticed you have ${opportunities.join(" or ")} coverage in your current policy. This represents an insurance opportunity - consider a dedicated policy for your valuable items (such as jewelry, art, collectibles, or other scheduled property) to ensure comprehensive protection beyond your standard coverage limits. `;
+                                }
+                              }
+                              
+                              if (coverages.length > 0 || opportunities.length > 0) {
+                                message += "We recommend discussing these options with your insurance agent to ensure you have adequate coverage for your specific needs.";
+                              }
+                              
+                              return message;
+                            })()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              } catch (error) {
+                console.error("Error in detection logic:", error);
+                return null;
+              }
+            })()}
               </div>
-            </div>
 
-            <div className="h-px bg-[#D9D9D9]"></div>
-
-            {/* Upload Declaration Page Section */}
-            <div className="flex flex-col gap-4">
-              <h3 className="text-base font-bold leading-5 text-black">
-                Compare with your current policy
-              </h3>
-              <p className="text-sm font-medium leading-5 text-[#666]">
-                Upload your current policy's declaration page and we'll extract
-                the data to show you a side-by-side comparison
-              </p>
-
-              <label className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors">
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.heic"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 2V14M2 12H22M7 7L12 2L17 7"
-                    stroke="#666"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <div className="text-center">
-                  <p className="text-sm font-bold text-black">
-                    {uploadedFile
-                      ? uploadedFile.name
-                      : "Click to upload or drag and drop"}
-                  </p>
-                  <p className="text-xs font-medium text-[#666] mt-1">
-                    PDF or image (JPG, PNG, HEIC) • Max 10MB
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            {/* Loading State */}
+            {/* Loading State - Show inline when processing */}
             {isLoading && (
-              <div className="flex items-center justify-center py-6 gap-2">
+              <div className="flex items-center justify-center py-4 gap-2">
                 <div
                   className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce"
                   style={{ animationDelay: "0s" }}
@@ -574,467 +1658,82 @@ export default function Index() {
                   style={{ animationDelay: "0.4s" }}
                 ></div>
                 <span className="text-sm font-medium text-[#666] ml-2">
-                  Extracting policy data from PDF...
+                  Extracting policy data...
                 </span>
-              </div>
-            )}
-
-            {/* Error State */}
-            {parseError && !isLoading && (
-              <div className="flex items-start gap-3 p-4 bg-[#FFE5E5] border border-[#FFB3B3] rounded">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="flex-shrink-0 mt-0.5"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="#D32F2F"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M12 8V12M12 16H12.01"
-                    stroke="#D32F2F"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-[#D32F2F]">
-                    Error extracting document
-                  </p>
-                  <p className="text-xs text-[#D32F2F] mt-1">{parseError}</p>
-                  {parseError.includes("clearer") && (
-                    <p className="text-xs text-[#D32F2F] mt-2">
-                      Try uploading a clearer photo or higher resolution image.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Success State */}
-            {uploadedFile &&
-              extractedData &&
-              extractedData.status !== "failed" &&
-              !parseError && (
-                <div className="flex items-start gap-3 p-4 bg-[#E5F2F1] border border-[#A5D6A7] rounded">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="flex-shrink-0 mt-0.5"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="#2E7D32"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M8 12L11 15L16 9"
-                      stroke="#2E7D32"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="flex-1 flex justify-between items-start gap-4">
-                    <div>
-                      <p className="text-sm font-bold text-[#2E7D32]">
-                        {extractedData.status === "complete"
-                          ? "Extraction Complete ✅"
-                          : "Partial Extraction"}
-                      </p>
-                      <p className="text-xs text-[#2E7D32] mt-1">
-                        {extractedData.status === "complete"
-                          ? `Successfully extracted data from ${uploadedFile.name}`
-                          : "Some fields could not be extracted. Please review below."}
-                      </p>
-                      {lastUpdated && (
-                        <p className="text-xs text-[#666] mt-2">
-                          Last updated: {lastUpdated}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={handleReplaceDocument}
-                      className="text-xs font-bold text-[#156EEA] hover:text-[#1257c7] whitespace-nowrap"
-                    >
-                      Replace document
-                    </button>
-                  </div>
-                </div>
-              )}
-
-            {/* Partial/Missing Fields Warning */}
-            {extractedData &&
-              extractedData.status === "partial" &&
-              extractedData.missingFields.length > 0 && (
-                <div className="flex items-start gap-3 p-4 bg-[#FFF3E0] border border-[#FFB74D] rounded">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="flex-shrink-0 mt-0.5"
-                  >
-                    <path
-                      d="M12 2L2 20h20L12 2z"
-                      stroke="#F57C00"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M12 9v4M12 17h.01"
-                      stroke="#F57C00"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-[#F57C00]">
-                      Some values couldn't be extracted
-                    </p>
-                    <p className="text-xs text-[#F57C00] mt-1">
-                      Please review the missing fields below and verify all
-                      information.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-            {/* Comparison Display */}
-            {extractedData && extractedData.status !== "failed" && (
-              <div className="flex flex-col gap-4">
-                <h3 className="text-base font-bold leading-5 text-black">
-                  Policy Comparison
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {/* Carrier */}
-                  {extractedData.policy.carrier && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-center px-1">
-                        <span className="text-sm font-bold text-black">
-                          Carrier
-                        </span>
-                        {extractedData.policy.carrier.confidence < 0.75 && (
-                          <span className="text-xs text-[#F57C00] font-bold">
-                            ⚠️ Needs review
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">
-                          FOREMOST
-                        </div>
-                        <div
-                          className={`p-2 rounded text-sm font-medium text-center ${
-                            extractedData.policy.carrier.value === "FOREMOST" ||
-                            extractedData.policy.carrier.value === "Foremost"
-                              ? "bg-[#E5F2F1] text-[#2E7D32]"
-                              : extractedData.policy.carrier.value
-                                ? "bg-[#FFE5E5] text-[#D32F2F]"
-                                : "bg-[#F2F2F2] text-[#999]"
-                          }`}
-                        >
-                          {extractedData.policy.carrier.value || "—"}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Effective Date */}
-                  {extractedData.policy.effectiveDate && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-center px-1">
-                        <span className="text-sm font-bold text-black">
-                          Effective Date
-                        </span>
-                        {extractedData.policy.effectiveDate.confidence <
-                          0.75 && (
-                          <span className="text-xs text-[#F57C00] font-bold">
-                            ⚠️ Needs review
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">
-                          1/1/2026
-                        </div>
-                        <div
-                          className={`p-2 rounded text-sm font-medium text-center ${
-                            extractedData.policy.effectiveDate.value ===
-                              "1/1/2026" ||
-                            extractedData.policy.effectiveDate.value ===
-                              "2026-01-01"
-                              ? "bg-[#E5F2F1] text-[#2E7D32]"
-                              : extractedData.policy.effectiveDate.value
-                                ? "bg-[#FFE5E5] text-[#D32F2F]"
-                                : "bg-[#F2F2F2] text-[#999]"
-                          }`}
-                        >
-                          {extractedData.policy.effectiveDate.value || "—"}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Deductible */}
-                  {extractedData.coverages.deductible && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-center px-1">
-                        <span className="text-sm font-bold text-black">
-                          Deductible
-                        </span>
-                        {extractedData.coverages.deductible.confidence <
-                          0.75 && (
-                          <span className="text-xs text-[#F57C00] font-bold">
-                            ⚠️ Needs review
-                          </span>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">
-                          $1,000
-                        </div>
-                        <div
-                          className={`p-2 rounded text-sm font-medium text-center ${
-                            extractedData.coverages.deductible.value === 1000 ||
-                            extractedData.coverages.deductible.value ===
-                              "$1,000"
-                              ? "bg-[#E5F2F1] text-[#2E7D32]"
-                              : extractedData.coverages.deductible.value
-                                ? "bg-[#FFE5E5] text-[#D32F2F]"
-                                : "bg-[#F2F2F2] text-[#999]"
-                          }`}
-                        >
-                          {extractedData.coverages.deductible.value
-                            ? `$${extractedData.coverages.deductible.value}`
-                            : "—"}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Standard Coverages */}
-                  <div className="flex flex-col gap-2 mt-2">
-                    <span className="text-sm font-bold text-black px-1">
-                      Standard Coverages
-                    </span>
-                    {[
-                      {
-                        label: "Dwelling",
-                        presented: 378380,
-                        key: "dwelling" as const,
-                      },
-                      {
-                        label: "Other structures",
-                        presented: 72000,
-                        key: "otherStructures" as const,
-                      },
-                      {
-                        label: "Personal property",
-                        presented: 138000,
-                        key: "personalProperty" as const,
-                      },
-                      {
-                        label: "Loss of use",
-                        presented: 50000,
-                        key: "lossOfUse" as const,
-                      },
-                      {
-                        label: "Personal liability",
-                        presented: 10000,
-                        key: "liability" as const,
-                      },
-                      {
-                        label: "Medical payment (to others)",
-                        presented: 5000,
-                        key: "medPay" as const,
-                      },
-                    ].map((item, idx) => {
-                      const coverage = extractedData.coverages[item.key];
-                      const isMatch =
-                        coverage && coverage.value === item.presented;
-                      const isMissing = !coverage || coverage.value === null;
-                      const isLowConfidence =
-                        coverage && coverage.confidence < 0.75;
-
-                      return (
-                        <div
-                          key={item.key}
-                          className={`grid grid-cols-1 gap-2 px-1 py-2 ${idx % 2 === 0 ? "bg-[#F9F9F9]" : ""}`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-medium text-[#666]">
-                              {item.label}
-                            </span>
-                            {isLowConfidence && !isMissing && (
-                              <span className="text-xs text-[#F57C00] font-bold">
-                                ⚠️ Needs review
-                              </span>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <span className="text-xs font-medium text-black text-center">
-                              ${item.presented.toLocaleString()}
-                            </span>
-                            <span
-                              className={`text-xs font-medium text-center rounded px-1 py-1 ${
-                                isMatch
-                                  ? "bg-[#E5F2F1] text-[#2E7D32]"
-                                  : !isMissing
-                                    ? "bg-[#FFE5E5] text-[#D32F2F]"
-                                    : "bg-[#F2F2F2] text-[#999]"
-                              }`}
-                            >
-                              {!isMissing
-                                ? `$${coverage.value?.toLocaleString()}`
-                                : "Not found"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Additional Coverages */}
-                  <div className="flex flex-col gap-2 mt-2">
-                    <span className="text-sm font-bold text-black px-1">
-                      Additional Coverages
-                    </span>
-                    {[
-                      {
-                        label: "Water back-up",
-                        presented: 10000,
-                        key: "waterBackup" as const,
-                      },
-                      {
-                        label: "Earthquake coverage",
-                        presented: null,
-                        key: "earthquake" as const,
-                      },
-                      {
-                        label: "Mold property damage",
-                        presented: null,
-                        key: "moldPropertyDamage" as const,
-                      },
-                      {
-                        label: "Mold liability",
-                        presented: null,
-                        key: "moldLiability" as const,
-                      },
-                    ].map((item, idx) => {
-                      const coverage = extractedData.coverages[item.key];
-                      const isMatch =
-                        coverage && coverage.value === item.presented;
-                      const isMissing = !coverage || coverage.value === null;
-                      const isLowConfidence =
-                        coverage && coverage.confidence < 0.75;
-
-                      return (
-                        <div
-                          key={item.key}
-                          className={`grid grid-cols-1 gap-2 px-1 py-2 ${idx % 2 === 0 ? "bg-[#F9F9F9]" : ""}`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs font-medium text-[#666]">
-                              {item.label}
-                            </span>
-                            {isLowConfidence && !isMissing && (
-                              <span className="text-xs text-[#F57C00] font-bold">
-                                ⚠️ Needs review
-                              </span>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <span className="text-xs font-medium text-black text-center">
-                              {item.presented
-                                ? `$${item.presented.toLocaleString()}`
-                                : "Not Included"}
-                            </span>
-                            <span
-                              className={`text-xs font-medium text-center rounded px-1 py-1 ${
-                                isMatch
-                                  ? "bg-[#E5F2F1] text-[#2E7D32]"
-                                  : !isMissing
-                                    ? "bg-[#FFE5E5] text-[#D32F2F]"
-                                    : "bg-[#F2F2F2] text-[#999]"
-                              }`}
-                            >
-                              {!isMissing
-                                ? coverage.value
-                                  ? `$${coverage.value?.toLocaleString()}`
-                                  : "Not Included"
-                                : "Not found"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Extraction Notes */}
-                {extractedData.notes && extractedData.notes.length > 0 && (
-                  <div className="flex items-start gap-3 p-4 bg-[#FFF3E0] border border-[#FFB74D] rounded mt-4">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="flex-shrink-0 mt-0.5"
-                    >
-                      <path
-                        d="M12 2L2 20h20L12 2z"
-                        stroke="#F57C00"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M12 9v4M12 17h.01"
-                        stroke="#F57C00"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-[#F57C00]">
-                        Notes from extraction
-                      </p>
-                      {extractedData.notes.map((note, idx) => (
-                        <p key={idx} className="text-xs text-[#F57C00] mt-1">
-                          • {note}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
             <div className="h-px bg-[#D9D9D9]"></div>
 
-            <div className="flex items-start gap-1 justify-between">
+            {/* Yearly Premium - Show comparison if data available */}
+            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex items-start gap-1 justify-between"} items-start px-4 py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
+              <div className="flex flex-col gap-1">
               <span className="text-2xl font-bold leading-8 text-[#111827]">
                 Yearly premium
               </span>
+                {extractedData && extractedData.status !== "failed" && !isLoading && (() => {
+                  const difference = calculatePremiumDifference();
+                  if (difference) {
+                    return (
+                      <span className={`text-sm font-semibold ${
+                        difference.isCheaper ? "text-[#10B981]" : "text-[#F97316]"
+                      }`}>
+                        Savings: ${difference.amount.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+              {extractedData && extractedData.status !== "failed" && !isLoading ? (
+                <>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-2xl font-bold leading-8 text-right text-[#111827] flex-1">
+                      $1,677.00
+                    </span>
+                    <div className="flex-shrink-0 w-5">
+                      {(() => {
+                        const difference = calculatePremiumDifference();
+                        if (difference) {
+                          if (difference.isCheaper) {
+                            // Proposed cheaper - green down arrow
+                            return (
+                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 12L4 6H12L8 12Z" fill="#10B981" />
+                              </svg>
+                            );
+                          } else {
+                            // Proposed more expensive - orange up arrow
+                            return (
+                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 4L12 10H4L8 4Z" fill="#F97316" />
+                              </svg>
+                            );
+                          }
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+                  <span className="text-2xl font-bold leading-8 text-[#111827] text-right">
+                    {extractedData.policy.premium?.value
+                      ? typeof extractedData.policy.premium.value === "number"
+                        ? `$${extractedData.policy.premium.value.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : `$${extractedData.policy.premium.value}`
+                      : "Unknown"}
+                  </span>
+                </>
+              ) : (
               <span className="text-2xl font-bold leading-8 text-[#111827]">
-                $2,083.00
+                  $1,677.00
               </span>
+              )}
             </div>
           </div>
         </div>
@@ -1070,7 +1769,7 @@ export default function Index() {
                     Policy Start Date
                   </span>
                   <span className="text-base font-medium leading-5 text-black">
-                    1/1/2026
+                    01/01/2026
                   </span>
                 </div>
                 <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
