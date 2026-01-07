@@ -332,7 +332,7 @@ export default function Index() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">1/1/2026</div>
-                      <div className="bg-[#F2F2F2] p-2 rounded text-sm font-medium text-black text-center">{extractedData.policyStartDate}</div>
+                      <div className="bg-[#F2F2F2] p-2 rounded text-sm font-medium text-black text-center">{extractedData.policyStartDate || '—'}</div>
                     </div>
                   </div>
 
