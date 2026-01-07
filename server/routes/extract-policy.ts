@@ -32,6 +32,9 @@ interface ExtractionResponse {
 // Helper to extract text from PDF
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
+    // Dynamically import pdfjs-dist only when needed
+    const pdfjsLib = await import('pdfjs-dist');
+
     // Configure pdf.js worker for Node.js environment
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
       // Use the embedded worker
