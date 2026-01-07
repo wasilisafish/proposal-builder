@@ -1,8 +1,6 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
