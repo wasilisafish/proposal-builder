@@ -370,102 +370,180 @@ export default function Index() {
             )}
 
             {/* Comparison Display */}
-            {extractedData && (
+            {extractedData && extractedData.status !== 'failed' && (
               <div className="flex flex-col gap-4">
                 <h3 className="text-base font-bold leading-5 text-black">Policy Comparison</h3>
                 <div className="flex flex-col gap-3">
-                  {/* Policy Basics Comparison */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center px-1">
-                      <span className="text-sm font-bold text-black">Policy Start Date</span>
-                      <span className="text-xs font-medium text-[#666]">Presented vs Your Current</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">1/1/2026</div>
-                      <div className="bg-[#F2F2F2] p-2 rounded text-sm font-medium text-black text-center">{extractedData.policyStartDate || '—'}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center px-1">
-                      <span className="text-sm font-bold text-black">Deductible</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">$1,000</div>
-                      <div className={`p-2 rounded text-sm font-medium text-center ${extractedData.deductible && extractedData.deductible !== '$1,000' ? 'bg-[#FFE5E5] text-[#D32F2F]' : extractedData.deductible === '$1,000' ? 'bg-[#E5F2F1] text-[#2E7D32]' : 'bg-[#F2F2F2] text-[#999]'}`}>
-                        {extractedData.deductible || '—'}
+                  {/* Carrier */}
+                  {extractedData.policy.carrier && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-sm font-bold text-black">Carrier</span>
+                        {extractedData.policy.carrier.confidence < 0.75 && (
+                          <span className="text-xs text-[#F57C00] font-bold">⚠️ Needs review</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">FOREMOST</div>
+                        <div className={`p-2 rounded text-sm font-medium text-center ${
+                          extractedData.policy.carrier.value === 'FOREMOST' || extractedData.policy.carrier.value === 'Foremost'
+                            ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                            : extractedData.policy.carrier.value
+                            ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                            : 'bg-[#F2F2F2] text-[#999]'
+                        }`}>
+                          {extractedData.policy.carrier.value || '—'}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Coverage Comparison */}
+                  {/* Effective Date */}
+                  {extractedData.policy.effectiveDate && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-sm font-bold text-black">Effective Date</span>
+                        {extractedData.policy.effectiveDate.confidence < 0.75 && (
+                          <span className="text-xs text-[#F57C00] font-bold">⚠️ Needs review</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">1/1/2026</div>
+                        <div className={`p-2 rounded text-sm font-medium text-center ${
+                          extractedData.policy.effectiveDate.value === '1/1/2026' || extractedData.policy.effectiveDate.value === '2026-01-01'
+                            ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                            : extractedData.policy.effectiveDate.value
+                            ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                            : 'bg-[#F2F2F2] text-[#999]'
+                        }`}>
+                          {extractedData.policy.effectiveDate.value || '—'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deductible */}
+                  {extractedData.coverages.deductible && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-sm font-bold text-black">Deductible</span>
+                        {extractedData.coverages.deductible.confidence < 0.75 && (
+                          <span className="text-xs text-[#F57C00] font-bold">⚠️ Needs review</span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">$1,000</div>
+                        <div className={`p-2 rounded text-sm font-medium text-center ${
+                          extractedData.coverages.deductible.value === 1000 || extractedData.coverages.deductible.value === '$1,000'
+                            ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                            : extractedData.coverages.deductible.value
+                            ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                            : 'bg-[#F2F2F2] text-[#999]'
+                        }`}>
+                          {extractedData.coverages.deductible.value ? `$${extractedData.coverages.deductible.value}` : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Standard Coverages */}
                   <div className="flex flex-col gap-2 mt-2">
                     <span className="text-sm font-bold text-black px-1">Standard Coverages</span>
                     {[
-                      { label: 'Dwelling', presented: '$378,380', key: 'dwelling' },
-                      { label: 'Other structures', presented: '$72,000', key: 'otherStructures' },
-                      { label: 'Personal property', presented: '$138,000', key: 'personalProperty' },
-                      { label: 'Loss of use', presented: '$50,000', key: 'lossOfUse' },
-                      { label: 'Personal liability', presented: '$10,000', key: 'personalLiability' },
-                      { label: 'Medical payment (to others)', presented: '$5,000', key: 'medicalPayment' },
-                    ].map((item, idx) => (
-                      <div key={item.key} className={`grid grid-cols-2 gap-2 px-1 py-1 ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : ''}`}>
-                        <div className="text-xs font-medium text-[#666]">{item.label}</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <span className="text-xs font-medium text-black text-center">{item.presented}</span>
-                          <span className={`text-xs font-medium text-center rounded px-1 ${
-                            extractedData[item.key] === item.presented
-                              ? 'bg-[#E5F2F1] text-[#2E7D32]'
-                              : extractedData[item.key]
-                              ? 'bg-[#FFE5E5] text-[#D32F2F]'
-                              : 'bg-[#F2F2F2] text-[#999]'
-                          }`}>
-                            {extractedData[item.key] || '—'}
-                          </span>
+                      { label: 'Dwelling', presented: 378380, key: 'dwelling' as const },
+                      { label: 'Other structures', presented: 72000, key: 'otherStructures' as const },
+                      { label: 'Personal property', presented: 138000, key: 'personalProperty' as const },
+                      { label: 'Loss of use', presented: 50000, key: 'lossOfUse' as const },
+                      { label: 'Personal liability', presented: 10000, key: 'liability' as const },
+                      { label: 'Medical payment (to others)', presented: 5000, key: 'medPay' as const },
+                    ].map((item, idx) => {
+                      const coverage = extractedData.coverages[item.key];
+                      const isMatch = coverage && coverage.value === item.presented;
+                      const isMissing = !coverage || coverage.value === null;
+                      const isLowConfidence = coverage && coverage.confidence < 0.75;
+
+                      return (
+                        <div key={item.key} className={`grid grid-cols-1 gap-2 px-1 py-2 ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : ''}`}>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium text-[#666]">{item.label}</span>
+                            {isLowConfidence && !isMissing && (
+                              <span className="text-xs text-[#F57C00] font-bold">⚠️ Needs review</span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <span className="text-xs font-medium text-black text-center">${item.presented.toLocaleString()}</span>
+                            <span className={`text-xs font-medium text-center rounded px-1 py-1 ${
+                              isMatch
+                                ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                                : !isMissing
+                                ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                                : 'bg-[#F2F2F2] text-[#999]'
+                            }`}>
+                              {!isMissing ? `$${coverage.value?.toLocaleString()}` : 'Not found'}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
-                  {/* Additional Coverages Comparison */}
+                  {/* Additional Coverages */}
                   <div className="flex flex-col gap-2 mt-2">
                     <span className="text-sm font-bold text-black px-1">Additional Coverages</span>
                     {[
-                      { label: 'Water back-up', presented: '$10,000', key: 'waterBackup' },
-                      { label: 'Earthquake coverage', presented: 'Not Included', key: 'earthquakeCoverage' },
-                      { label: 'Mold property damage', presented: 'Not Included', key: 'moldPropertyDamage' },
-                    ].map((item, idx) => (
-                      <div key={item.key} className={`grid grid-cols-2 gap-2 px-1 py-1 ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : ''}`}>
-                        <div className="text-xs font-medium text-[#666]">{item.label}</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <span className="text-xs font-medium text-black text-center">{item.presented}</span>
-                          <span className={`text-xs font-medium text-center rounded px-1 ${
-                            extractedData[item.key] === item.presented
-                              ? 'bg-[#E5F2F1] text-[#2E7D32]'
-                              : extractedData[item.key]
-                              ? 'bg-[#FFE5E5] text-[#D32F2F]'
-                              : 'bg-[#F2F2F2] text-[#999]'
-                          }`}>
-                            {extractedData[item.key] || '—'}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      { label: 'Water back-up', presented: 10000, key: 'waterBackup' as const },
+                      { label: 'Earthquake coverage', presented: null, key: 'earthquake' as const },
+                      { label: 'Mold property damage', presented: null, key: 'moldPropertyDamage' as const },
+                      { label: 'Mold liability', presented: null, key: 'moldLiability' as const },
+                    ].map((item, idx) => {
+                      const coverage = extractedData.coverages[item.key];
+                      const isMatch = coverage && coverage.value === item.presented;
+                      const isMissing = !coverage || coverage.value === null;
+                      const isLowConfidence = coverage && coverage.confidence < 0.75;
 
-                  {/* Premium Comparison */}
-                  <div className="flex flex-col gap-2 mt-2">
-                    <div className="flex justify-between items-center px-1">
-                      <span className="text-sm font-bold text-black">Annual Premium</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-[#E5F1FF] p-2 rounded text-sm font-medium text-black text-center">$2,083.00</div>
-                      <div className={`p-2 rounded text-sm font-medium text-center ${extractedData.annualPremium && extractedData.annualPremium !== '$2,083.00' ? 'bg-[#FFE5E5] text-[#D32F2F]' : 'bg-[#E5F2F1] text-[#2E7D32]'}`}>
-                        {extractedData.annualPremium || 'Not extracted'}
-                      </div>
-                    </div>
+                      return (
+                        <div key={item.key} className={`grid grid-cols-1 gap-2 px-1 py-2 ${idx % 2 === 0 ? 'bg-[#F9F9F9]' : ''}`}>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium text-[#666]">{item.label}</span>
+                            {isLowConfidence && !isMissing && (
+                              <span className="text-xs text-[#F57C00] font-bold">⚠️ Needs review</span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <span className="text-xs font-medium text-black text-center">
+                              {item.presented ? `$${item.presented.toLocaleString()}` : 'Not Included'}
+                            </span>
+                            <span className={`text-xs font-medium text-center rounded px-1 py-1 ${
+                              isMatch
+                                ? 'bg-[#E5F2F1] text-[#2E7D32]'
+                                : !isMissing
+                                ? 'bg-[#FFE5E5] text-[#D32F2F]'
+                                : 'bg-[#F2F2F2] text-[#999]'
+                            }`}>
+                              {!isMissing ? (coverage.value ? `$${coverage.value?.toLocaleString()}` : 'Not Included') : 'Not found'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
+
+                {/* Extraction Notes */}
+                {extractedData.notes && extractedData.notes.length > 0 && (
+                  <div className="flex items-start gap-3 p-4 bg-[#FFF3E0] border border-[#FFB74D] rounded mt-4">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
+                      <path d="M12 2L2 20h20L12 2z" stroke="#F57C00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 9v4M12 17h.01" stroke="#F57C00" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-[#F57C00]">Notes from extraction</p>
+                      {extractedData.notes.map((note, idx) => (
+                        <p key={idx} className="text-xs text-[#F57C00] mt-1">• {note}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
