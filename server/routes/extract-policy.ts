@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
-import * as pdfjsLib from 'pdfjs-dist';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
