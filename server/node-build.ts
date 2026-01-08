@@ -14,13 +14,20 @@ const distPath = path.join(__dirname, "../spa");
 app.use(express.static(distPath));
 
 // Handle React Router - serve index.html for all non-API routes
+// API routes are handled by routes registered in createServer()
 app.use((req, res, next) => {
-  // Don't serve index.html for API routes - return 404 if API route doesn't exist
+  // Skip if this is an API route - let Express handle it naturally
   if (req.path.startsWith("/api/") || req.path.startsWith("/health")) {
-    return res.status(404).json({ error: "API endpoint not found" });
+    // If no route matched, return 404 for API routes
+    if (!res.headersSent) {
+      return res.status(404).json({ error: "API endpoint not found" });
+    }
+    return;
   }
   // Serve index.html for all other routes (SPA routing)
-  res.sendFile(path.join(distPath, "index.html"));
+  if (!res.headersSent) {
+    res.sendFile(path.join(distPath, "index.html"));
+  }
 });
 
 app.listen(port, () => {
