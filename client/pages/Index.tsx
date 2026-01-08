@@ -842,7 +842,7 @@ export default function Index() {
             )}
 
             {/* Carrier Comparison */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}>
+            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
@@ -1040,7 +1040,7 @@ export default function Index() {
                         </div>
 
               <div className="flex flex-col">
-                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Policy Start Date
                         </span>
@@ -1061,7 +1061,7 @@ export default function Index() {
                           </span>
                         )}
                       </div>
-                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Deductible
                   </span>
@@ -1155,8 +1155,8 @@ export default function Index() {
                       return (
                         <div
                           key={item.key}
-                      className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 0 ? "bg-[#F2F2F2]" : ""}`}
-                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}
+                      className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 0 ? "bg-[#F2F2F2]" : ""}`}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}
                         >
                       <span className="text-base font-normal md:font-medium leading-5 text-black">
                               {item.label}
