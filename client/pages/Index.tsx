@@ -36,6 +36,7 @@ export default function Index() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const carrierStickyRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -277,6 +278,50 @@ export default function Index() {
     const parsed = parseFloat(String(fieldValue.value).replace(/[$,]/g, ""));
     return isNaN(parsed) ? null : parsed;
   };
+
+  // Handle sticky carrier section on mobile/tablet
+  useEffect(() => {
+    if (!carrierStickyRef.current) return;
+    if (!extractedData || extractedData.status === "failed" || !extractedData.policy.carrier?.value) return;
+    
+    const element = carrierStickyRef.current;
+    const parent = element.parentElement;
+    if (!parent) return;
+
+    const handleScroll = () => {
+      const rect = element.getBoundingClientRect();
+      const parentRect = parent.getBoundingClientRect();
+      
+      // Only apply on mobile/tablet (screen width < 768px)
+      if (window.innerWidth >= 768) {
+        element.style.position = 'static';
+        element.style.top = '';
+        return;
+      }
+
+      if (rect.top <= 0 && parentRect.top <= 0) {
+        element.style.position = 'fixed';
+        element.style.top = '0';
+        element.style.left = '0';
+        element.style.right = '0';
+        element.style.width = '100%';
+        element.style.zIndex = '30';
+      } else {
+        element.style.position = 'static';
+        element.style.top = '';
+        element.style.left = '';
+        element.style.right = '';
+        element.style.width = '';
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [extractedData]);
 
   // Calculate premium difference compared to current policy
   const calculatePremiumDifference = (): { amount: number; isCheaper: boolean } | null => {
@@ -842,7 +887,11 @@ export default function Index() {
             )}
 
             {/* Carrier Comparison - Sticky when in comparison mode (mobile/tablet only) */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2 ${extractedData && extractedData.status !== "failed" && extractedData.policy.carrier?.value ? "md:static sticky top-0 bg-white z-30 border-b border-[#D9D9D9] shadow-sm -mx-3 md:mx-0" : ""}`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
+            <div 
+              ref={carrierStickyRef}
+              className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2 ${extractedData && extractedData.status !== "failed" && extractedData.policy.carrier?.value ? "bg-white border-b border-[#D9D9D9] shadow-sm" : ""}`} 
+              style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}
+            >
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
