@@ -828,14 +828,14 @@ export default function Index() {
             )}
 
             {/* Carrier Comparison */}
-            <div className="flex justify-between items-start px-3 md:px-4 py-3 md:py-2">
+            <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
               {extractedData && extractedData.status !== "failed" ? (
-                <div className="flex flex-row gap-4 items-start" style={{ width: '100%', maxWidth: '320px' }}>
+                <>
                   {/* Proposed Carrier */}
-                  <div className="flex flex-col items-end text-right flex-1 min-w-0">
+                  <div className="flex flex-col items-end text-right">
                     {(() => {
                       const carrierName = "foremost";
                       const logoUrl = CARRIER_LOGOS[carrierName];
@@ -846,31 +846,31 @@ export default function Index() {
                             <img 
                               src={logoUrl} 
                               alt="FOREMOST"
-                              className="max-h-[24px] object-contain mb-1 ml-auto"
+                              className="max-h-[16px] md:max-h-[24px] object-contain mb-1 ml-auto"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                                 const parent = target.parentElement;
                                 if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                   const span = document.createElement('span');
-                                  span.className = 'carrier-text-fallback text-black font-bold text-base text-right whitespace-nowrap';
+                                  span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base text-right whitespace-nowrap';
                                   span.textContent = 'FOREMOST';
                                   parent.insertBefore(span, parent.firstChild);
                                 }
                               }}
                             />
                           ) : (
-                            <span className="text-black font-bold text-base text-right whitespace-nowrap">FOREMOST</span>
+                            <span className="text-black font-bold text-sm md:text-base text-right whitespace-nowrap">FOREMOST</span>
                           )}
                           {extractedData.policy.carrier?.value && (
-                            <span className="text-sm font-semibold text-black mt-1 text-right whitespace-nowrap">Proposed</span>
+                            <span className="text-xs md:text-sm font-semibold text-black mt-1 text-right whitespace-nowrap">Proposed</span>
                           )}
                         </>
                       );
                     })()}
-                </div>
+                  </div>
                   {/* Current Carrier - with delete on hover */}
-                  <div className="flex flex-col items-end text-right group relative flex-1 min-w-0">
+                  <div className="flex flex-col items-end text-right group relative">
                     {extractedData.policy.carrier?.value ? (
                       (() => {
                         const carrierName = String(extractedData.policy.carrier.value).toLowerCase().trim();
@@ -883,7 +883,7 @@ export default function Index() {
                               <img 
                                 src={logoUrl} 
                                 alt={displayName}
-                                className="max-h-[24px] object-contain mb-1 ml-auto"
+                                className="max-h-[16px] md:max-h-[24px] object-contain mb-1 ml-auto"
                                 title={displayName}
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -891,7 +891,7 @@ export default function Index() {
                                   const parent = target.parentElement;
                                   if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                     const span = document.createElement('span');
-                                    span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full text-right whitespace-nowrap';
+                                    span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base truncate block w-full text-right whitespace-nowrap';
                                     span.textContent = displayName || 'Unknown';
                                     span.title = displayName || 'Unknown';
                                     parent.insertBefore(span, parent.firstChild);
@@ -900,14 +900,14 @@ export default function Index() {
                               />
                             ) : (
                               <span 
-                                className="text-black font-bold text-base truncate block w-full text-right whitespace-nowrap" 
+                                className="text-black font-bold text-sm md:text-base truncate block w-full text-right whitespace-nowrap" 
                                 title={displayName}
                               >
                                 {displayName}
                               </span>
                             )}
                             <div className="flex items-center justify-end gap-2 mt-1 w-full">
-                              <span className="text-sm font-semibold text-black text-right whitespace-nowrap">Current</span>
+                              <span className="text-xs md:text-sm font-semibold text-black text-right whitespace-nowrap">Current</span>
                               <button
                                 onClick={handleDeletePolicy}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
@@ -937,13 +937,13 @@ export default function Index() {
                     ) : (
                       <>
                         <span 
-                          className="text-black font-bold text-base truncate block w-full text-right whitespace-nowrap" 
+                          className="text-black font-bold text-sm md:text-base truncate block w-full text-right whitespace-nowrap" 
                           title="Unknown"
                         >
                           Unknown
                         </span>
                         <div className="flex items-center justify-end gap-2 mt-1 w-full">
-                          <span className="text-sm font-semibold text-black text-right whitespace-nowrap">Current</span>
+                          <span className="text-xs md:text-sm font-semibold text-black text-right whitespace-nowrap">Current</span>
                     <button
                             onClick={handleDeletePolicy}
                             className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
@@ -970,7 +970,7 @@ export default function Index() {
                       </>
                     )}
                   </div>
-                </div>
+                </>
               ) : (
                 <div className="flex flex-col items-start">
                   {(() => {
