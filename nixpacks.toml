@@ -1,6 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_22", "pnpm"]
-aptPkgs = ["poppler-utils"]
+nixPkgs = ["nodejs_22", "pnpm", "poppler_utils"]
 
 [phases.install]
 cmds = ["pnpm install --frozen-lockfile"]
