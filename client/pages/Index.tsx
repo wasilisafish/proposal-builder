@@ -1718,11 +1718,11 @@ export default function Index() {
               </div>
               {extractedData && extractedData.status !== "failed" && !isLoading ? (
                 <>
-                  <div className="flex items-center justify-start md:justify-end gap-2">
-                    <span className="text-xl md:text-2xl font-bold leading-8 text-left md:text-right text-[#111827] flex-1" style={{ fontSize: '1.2rem' }}>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-xl md:text-2xl font-bold leading-8 text-right text-[#111827]" style={{ fontSize: '1.2rem' }}>
                       $1,677.00
                     </span>
-                    <div className="flex-shrink-0 w-5">
+                    <div className="flex-shrink-0 w-4">
                       {(() => {
                         const difference = calculatePremiumDifference();
                         if (difference) {
@@ -1746,7 +1746,7 @@ export default function Index() {
                       })()}
                     </div>
                   </div>
-                  <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827] text-left md:text-right" style={{ fontSize: '1.2rem' }}>
+                  <span className="text-xl md:text-2xl font-bold leading-8 text-right text-[#111827]" style={{ fontSize: '1.2rem' }}>
                     {extractedData.policy.premium?.value
                       ? typeof extractedData.policy.premium.value === "number"
                         ? `$${extractedData.policy.premium.value.toLocaleString("en-US", {
@@ -1758,7 +1758,7 @@ export default function Index() {
                   </span>
                 </>
               ) : (
-              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]" style={{ fontSize: '1.2rem' }}>
+              <span className="text-xl md:text-2xl font-bold leading-8 text-right text-[#111827]" style={{ fontSize: '1.2rem' }}>
                   $1,677.00
               </span>
               )}
