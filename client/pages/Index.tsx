@@ -299,7 +299,7 @@ export default function Index() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content */}
       <div
-        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-32 md:pb-40 flex-1 w-full"
+        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-32 md:pb-40 flex-1 w-full overflow-x-hidden"
         style={{ minHeight: "1349px" }}
       >
         {/* Header */}
@@ -842,7 +842,7 @@ export default function Index() {
             )}
 
             {/* Carrier Comparison - Sticky when in comparison mode */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2 ${extractedData && extractedData.status !== "failed" && extractedData.policy.carrier?.value ? "sticky top-0 bg-white z-30 border-b border-[#D9D9D9] shadow-sm" : ""}`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
+            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2 ${extractedData && extractedData.status !== "failed" && extractedData.policy.carrier?.value ? "sticky top-0 bg-white z-30 border-b border-[#D9D9D9] shadow-sm -mx-3 md:-mx-20" : ""}`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
