@@ -1865,10 +1865,10 @@ export default function Index() {
             <div className="h-px bg-[#D9D9D9]"></div>
 
             <div className="flex items-start gap-1 justify-between">
-              <span className="text-2xl font-bold leading-8 text-[#111827]">
+              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]" style={{ fontSize: '1.2rem' }}>
                 Yearly premium
               </span>
-              <span className="text-2xl font-bold leading-8 text-[#111827]">
+              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]">
                 $1,234.00
               </span>
             </div>
