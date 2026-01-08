@@ -299,7 +299,7 @@ export default function Index() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content */}
       <div
-        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-3 md:pb-10 flex-1"
+        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-3 md:pb-10 flex-1 w-full overflow-x-hidden"
         style={{ minHeight: "1349px" }}
       >
         {/* Header */}
@@ -366,7 +366,7 @@ export default function Index() {
         </div>
 
         {/* Review Banner */}
-        <div className="rounded-lg bg-[#E5F1FF] p-3 md:p-10 flex flex-col md:flex-row justify-between items-end gap-6 mb-6">
+        <div className="rounded-lg bg-[#E5F1FF] p-3 md:p-10 flex flex-col md:flex-row justify-between items-end gap-6 mb-6 w-full overflow-hidden">
           <div className="flex-1 flex flex-col gap-6">
             <h1 className="text-[32px] md:text-[40px] font-bold leading-[1.3] text-black">
               Review your insurance offer
@@ -842,7 +842,7 @@ export default function Index() {
             )}
 
             {/* Carrier Comparison */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
+            <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}>
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
@@ -1040,7 +1040,7 @@ export default function Index() {
                         </div>
 
               <div className="flex flex-col">
-                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Policy Start Date
                         </span>
@@ -1115,7 +1115,7 @@ export default function Index() {
                   Standard coverages
                 </span>
                 {extractedData && extractedData.status !== "failed" ? (
-                  <div className="grid gap-2 md:gap-4" style={{ gridTemplateColumns: 'minmax(120px, 160px) minmax(120px, 160px)', display: 'grid' }}>
+                  <div className="grid gap-2 md:gap-4" style={{ gridTemplateColumns: 'minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' }}>
                     {/* Empty space for alignment - headers are shown in carrier section */}
                         </div>
                 ) : (
@@ -1156,7 +1156,7 @@ export default function Index() {
                         <div
                           key={item.key}
                       className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 0 ? "bg-[#F2F2F2]" : ""}`}
-                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}
                         >
                       <span className="text-base font-normal md:font-medium leading-5 text-black">
                               {item.label}
@@ -1278,7 +1278,7 @@ export default function Index() {
                         <div
                           key={item.key}
                       className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 1 ? "bg-[#F2F2F2]" : ""}`}
-                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}
                         >
                       <span className="text-base font-normal md:font-medium leading-5 text-black">
                               {item.label}
@@ -1694,7 +1694,7 @@ export default function Index() {
             <div className="h-px bg-[#D9D9D9]"></div>
 
             {/* Yearly Premium - Show comparison if data available */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-col md:flex-row items-start gap-1 justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)', display: 'grid' } : {}}>
+            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-col md:flex-row items-start gap-1 justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
               <div className="flex flex-col gap-1 mb-2 md:mb-0">
               <span className="text-2xl font-bold leading-8 text-[#111827]">
                 Yearly premium
