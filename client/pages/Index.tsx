@@ -37,7 +37,7 @@ export default function Index() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const carrierStickyRef = useRef<HTMLDivElement>(null);
-  const umbrellaSectionRef = useRef<HTMLDivElement>(null);
+  const homeInsuranceSectionRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -300,12 +300,12 @@ export default function Index() {
         return;
       }
 
-      // Check if umbrella section is in view - if so, remove sticky
-      const umbrellaSection = umbrellaSectionRef.current;
-      if (umbrellaSection) {
-        const umbrellaRect = umbrellaSection.getBoundingClientRect();
-        // If umbrella section is visible (top is above viewport), remove sticky
-        if (umbrellaRect.top <= window.innerHeight) {
+      // Check if home insurance section is fully out of view - if so, remove sticky
+      const homeInsuranceSection = homeInsuranceSectionRef.current;
+      if (homeInsuranceSection) {
+        const homeRect = homeInsuranceSection.getBoundingClientRect();
+        // If home insurance section bottom has scrolled past the top of viewport (fully not visible), remove sticky
+        if (homeRect.bottom <= 0) {
           element.style.position = 'static';
           element.style.top = '';
           element.style.left = '';
@@ -660,7 +660,7 @@ export default function Index() {
         </div>
 
         {/* Home Insurance Details */}
-        <div className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
+        <div ref={homeInsuranceSectionRef} className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start px-3 md:px-1 gap-4">
             <div className="flex flex-col gap-1">
             <h2 className="text-2xl font-bold leading-8 text-[#111827]">
@@ -1832,7 +1832,7 @@ export default function Index() {
         </div>
 
         {/* Umbrella Insurance Details */}
-        <div ref={umbrellaSectionRef} className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
+        <div className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
           <div className="flex flex-col gap-1 px-3 md:px-1">
             <h2 className="text-2xl font-bold leading-8 text-[#111827]">
               Umbrella insurance details
