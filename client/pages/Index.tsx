@@ -37,6 +37,7 @@ export default function Index() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const carrierStickyRef = useRef<HTMLDivElement>(null);
+  const umbrellaSectionRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -297,6 +298,21 @@ export default function Index() {
         element.style.position = 'static';
         element.style.top = '';
         return;
+      }
+
+      // Check if umbrella section is in view - if so, remove sticky
+      const umbrellaSection = umbrellaSectionRef.current;
+      if (umbrellaSection) {
+        const umbrellaRect = umbrellaSection.getBoundingClientRect();
+        // If umbrella section is visible (top is above viewport), remove sticky
+        if (umbrellaRect.top <= window.innerHeight) {
+          element.style.position = 'static';
+          element.style.top = '';
+          element.style.left = '';
+          element.style.right = '';
+          element.style.width = '';
+          return;
+        }
       }
 
       if (rect.top <= 0 && parentRect.top <= 0) {
@@ -1816,7 +1832,7 @@ export default function Index() {
         </div>
 
         {/* Umbrella Insurance Details */}
-        <div className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
+        <div ref={umbrellaSectionRef} className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
           <div className="flex flex-col gap-1 px-3 md:px-1">
             <h2 className="text-2xl font-bold leading-8 text-[#111827]">
               Umbrella insurance details
