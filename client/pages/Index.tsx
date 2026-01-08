@@ -1025,35 +1025,35 @@ export default function Index() {
                         </div>
 
               <div className="flex flex-col">
-                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Policy Start Date
-                        </span>
+                  </span>
                   {extractedData && extractedData.status !== "failed" ? (
-                    <div className="flex flex-row gap-4" style={{ width: '100%', maxWidth: '320px' }}>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap flex-1 min-w-0">
+                    <>
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                         01/01/2026
                       </span>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap flex-1 min-w-0">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                         {extractedData.policy.effectiveDate?.value 
                           ? normalizeDate(extractedData.policy.effectiveDate.value)
                           : "Unknown"}
                       </span>
-                    </div>
+                    </>
                   ) : (
-                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap">
+                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                       01/01/2026
-                          </span>
-                        )}
-                      </div>
+                    </span>
+                  )}
+                </div>
                 <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
-                  <span className="text-base font-medium leading-5 text-black">
+                  <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Deductible
                   </span>
                   {extractedData && extractedData.status !== "failed" ? (
-                    <div className="flex flex-row gap-4 items-center" style={{ width: '100%', maxWidth: '320px' }}>
-                      <div className="flex items-center justify-end gap-2 flex-1 min-w-0">
-                        <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap">
+                    <>
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                           $1,000
                         </span>
                         <div className="flex-shrink-0 w-4">
@@ -1081,19 +1081,19 @@ export default function Index() {
                           })()}
                         </div>
                       </div>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap flex-1 min-w-0">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                         {extractedData.coverages.deductible?.value
                           ? `$${extractedData.coverages.deductible.value.toLocaleString()}`
                           : "Unknown"}
                       </span>
-                    </div>
+                    </>
                   ) : (
-                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap">
+                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                       $1,000
-                          </span>
-                        )}
-                      </div>
-                        </div>
+                    </span>
+                  )}
+                </div>
+              </div>
 
               <div className="flex flex-row justify-between items-center px-3 md:px-4 py-3 md:py-2">
                 <span className="text-base font-bold leading-5 text-black">
