@@ -1277,15 +1277,15 @@ export default function Index() {
                       return (
                         <div
                           key={item.key}
-                      className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 1 ? "bg-[#F2F2F2]" : ""}`}
-                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}
+                      className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 1 ? "bg-[#F2F2F2]" : ""}`}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}
                         >
                       <span className="text-base font-normal md:font-medium leading-5 text-black">
                               {item.label}
                             </span>
                       {extractedData && extractedData.status !== "failed" ? (
                         <>
-                          <div className="flex items-center justify-end gap-2 min-w-[160px]">
+                          <div className="flex items-center justify-end gap-2">
                             <span className={`text-base font-normal md:font-medium leading-5 text-right ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
                               {item.isIncluded ? `$${item.value?.toLocaleString()}` : "Not Included"}
                               </span>
@@ -1340,7 +1340,7 @@ export default function Index() {
                               })()}
                           </div>
                           </div>
-                          <span className={`text-base font-normal md:font-medium leading-5 text-right min-w-[160px] ${
+                          <span className={`text-base font-normal md:font-medium leading-5 text-right ${
                             (() => {
                               // If explicitly excluded, show as "Not Included" in gray
                               if (isExcluded) {
