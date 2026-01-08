@@ -833,9 +833,9 @@ export default function Index() {
                 Carrier
               </span>
               {extractedData && extractedData.status !== "failed" ? (
-                <div className="flex flex-row gap-4 items-start">
+                <div className="flex flex-row gap-4 items-start" style={{ width: '100%', maxWidth: '320px' }}>
                   {/* Proposed Carrier */}
-                  <div className="flex flex-col items-end text-right">
+                  <div className="flex flex-col items-end text-right flex-1 min-w-0">
                     {(() => {
                       const carrierName = "foremost";
                       const logoUrl = CARRIER_LOGOS[carrierName];
@@ -853,24 +853,24 @@ export default function Index() {
                                 const parent = target.parentElement;
                                 if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                   const span = document.createElement('span');
-                                  span.className = 'carrier-text-fallback text-black font-bold text-base text-right';
+                                  span.className = 'carrier-text-fallback text-black font-bold text-base text-right whitespace-nowrap';
                                   span.textContent = 'FOREMOST';
                                   parent.insertBefore(span, parent.firstChild);
                                 }
                               }}
                             />
                           ) : (
-                            <span className="text-black font-bold text-base text-right">FOREMOST</span>
+                            <span className="text-black font-bold text-base text-right whitespace-nowrap">FOREMOST</span>
                           )}
                           {extractedData.policy.carrier?.value && (
-                            <span className="text-sm font-semibold text-black mt-1 text-right">Proposed</span>
+                            <span className="text-sm font-semibold text-black mt-1 text-right whitespace-nowrap">Proposed</span>
                           )}
                         </>
                       );
                     })()}
                 </div>
                   {/* Current Carrier - with delete on hover */}
-                  <div className="flex flex-col items-end text-right group relative">
+                  <div className="flex flex-col items-end text-right group relative flex-1 min-w-0">
                     {extractedData.policy.carrier?.value ? (
                       (() => {
                         const carrierName = String(extractedData.policy.carrier.value).toLowerCase().trim();
@@ -891,7 +891,7 @@ export default function Index() {
                                   const parent = target.parentElement;
                                   if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                     const span = document.createElement('span');
-                                    span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full text-right';
+                                    span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full text-right whitespace-nowrap';
                                     span.textContent = displayName || 'Unknown';
                                     span.title = displayName || 'Unknown';
                                     parent.insertBefore(span, parent.firstChild);
@@ -900,17 +900,17 @@ export default function Index() {
                               />
                             ) : (
                               <span 
-                                className="text-black font-bold text-base truncate block w-full text-right" 
+                                className="text-black font-bold text-base truncate block w-full text-right whitespace-nowrap" 
                                 title={displayName}
                               >
                                 {displayName}
                               </span>
                             )}
                             <div className="flex items-center justify-end gap-2 mt-1 w-full">
-                              <span className="text-sm font-semibold text-black text-right">Current</span>
+                              <span className="text-sm font-semibold text-black text-right whitespace-nowrap">Current</span>
                               <button
                                 onClick={handleDeletePolicy}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                                 title="Remove current policy comparison"
                               >
                                 <svg
@@ -937,36 +937,36 @@ export default function Index() {
                     ) : (
                       <>
                         <span 
-                          className="text-black font-bold text-base truncate block w-full text-right" 
+                          className="text-black font-bold text-base truncate block w-full text-right whitespace-nowrap" 
                           title="Unknown"
                         >
                           Unknown
                         </span>
                         <div className="flex items-center justify-end gap-2 mt-1 w-full">
-                          <span className="text-sm font-semibold text-black text-right">Current</span>
+                          <span className="text-sm font-semibold text-black text-right whitespace-nowrap">Current</span>
                     <button
                             onClick={handleDeletePolicy}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                             title="Remove current policy comparison"
                           >
                             <svg
                               width="14"
                               height="14"
                               viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
                               className="text-[#666] hover:text-[#333]"
-                  >
-                    <path
+                            >
+                              <path
                                 d="M12 4L4 12M4 4l8 8"
                                 stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                           </button>
-                  </div>
+                        </div>
                       </>
                     )}
                   </div>
@@ -1030,18 +1030,18 @@ export default function Index() {
                     Policy Start Date
                         </span>
                   {extractedData && extractedData.status !== "failed" ? (
-                    <div className="flex flex-row gap-4">
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
+                    <div className="flex flex-row gap-4" style={{ width: '100%', maxWidth: '320px' }}>
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap flex-1 min-w-0">
                         01/01/2026
                       </span>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right min-w-[160px]">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap flex-1 min-w-0">
                         {extractedData.policy.effectiveDate?.value 
                           ? normalizeDate(extractedData.policy.effectiveDate.value)
                           : "Unknown"}
                       </span>
                     </div>
                   ) : (
-                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
+                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap">
                       01/01/2026
                           </span>
                         )}
@@ -1051,9 +1051,9 @@ export default function Index() {
                     Deductible
                   </span>
                   {extractedData && extractedData.status !== "failed" ? (
-                    <div className="flex flex-row gap-4 items-center">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
+                    <div className="flex flex-row gap-4 items-center" style={{ width: '100%', maxWidth: '320px' }}>
+                      <div className="flex items-center justify-end gap-2 flex-1 min-w-0">
+                        <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap">
                           $1,000
                         </span>
                         <div className="flex-shrink-0 w-4">
@@ -1081,14 +1081,14 @@ export default function Index() {
                           })()}
                         </div>
                       </div>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right min-w-[160px]">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap flex-1 min-w-0">
                         {extractedData.coverages.deductible?.value
                           ? `$${extractedData.coverages.deductible.value.toLocaleString()}`
                           : "Unknown"}
-                        </span>
+                      </span>
                     </div>
                   ) : (
-                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
+                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right whitespace-nowrap">
                       $1,000
                           </span>
                         )}
