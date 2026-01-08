@@ -299,7 +299,7 @@ export default function Index() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content */}
       <div
-        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-3 md:pb-10 flex-1 w-full overflow-x-hidden"
+        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-32 md:pb-40 flex-1 w-full overflow-x-hidden"
         style={{ minHeight: "1349px" }}
       >
         {/* Header */}
@@ -1703,7 +1703,7 @@ export default function Index() {
                   const difference = calculatePremiumDifference();
                   if (difference) {
                     return (
-                      <span className={`text-sm font-semibold ${
+                      <span className={`text-sm font-semibold whitespace-nowrap ${
                         difference.isCheaper ? "text-[#10B981]" : "text-[#F97316]"
                       }`}>
                         {difference.isCheaper ? "Savings" : "Premium difference"}: ${difference.amount.toLocaleString("en-US", {
@@ -1953,11 +1953,9 @@ export default function Index() {
       </div>
 
       {/* Select Offer - Sticky Bottom Bar */}
-      <div className="sticky bottom-0 left-0 right-0 w-full flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-3 md:pt-5 px-3 md:px-20 pb-3 md:pb-5 border-t border-[#D9D9D9] z-40 shadow-lg">
-        <p className="text-base font-medium leading-5 text-black flex-1">
-          By clicking "Select Offer," you acknowledge that you have reviewed the
-          details of your policy offer, including all coverage limits,
-          deductibles, and premiums.
+      <div className="fixed bottom-0 left-0 right-0 w-full flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-5 bg-white pt-3 md:pt-5 px-3 md:px-20 pb-3 md:pb-5 border-t border-[#D9D9D9] z-40 shadow-lg">
+        <p className="text-sm md:text-base font-medium leading-5 text-black flex-1 whitespace-nowrap overflow-hidden text-ellipsis">
+          By clicking "Select Offer," you acknowledge that you have reviewed the details of your policy offer, including all coverage limits, deductibles, and premiums.
         </p>
         <button className="flex px-3 md:px-5 py-3 md:py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors w-full md:w-auto">
           Select Offer
