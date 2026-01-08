@@ -4,9 +4,9 @@ import * as Dialog from "@radix-ui/react-dialog";
 
 // Carrier logo mappings - add your logo URLs here
 const CARRIER_LOGOS: Record<string, string> = {
-  // Example: "foremost": "/logos/foremost.png",
-  // Example: "liberty oak": "/logos/liberty-oak.png",
-  // Add more carrier logos as needed
+  "allstate": "https://maticinsurance.sirv.com/carriers/regular/allstate.svg",
+  "foremost": "https://maticinsurance.sirv.com/carriers/regular/foremost.svg",
+  "safeco": "https://maticinsurance.sirv.com/carriers/regular/safeco.svg",
 };
 
 export default function Index() {
@@ -285,7 +285,7 @@ export default function Index() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Main Content */}
       <div
-        className="max-w-[900px] mx-auto px-5 md:px-20 py-10 pb-10 flex-1"
+        className="max-w-[900px] mx-auto px-3 md:px-20 py-3 md:py-10 pb-3 md:pb-10 flex-1"
         style={{ minHeight: "1349px" }}
       >
         {/* Header */}
@@ -352,12 +352,12 @@ export default function Index() {
         </div>
 
         {/* Review Banner */}
-        <div className="rounded-lg bg-[#E5F1FF] p-6 md:p-10 flex flex-col md:flex-row justify-between items-end gap-6 mb-6">
+        <div className="rounded-lg bg-[#E5F1FF] p-3 md:p-10 flex flex-col md:flex-row justify-between items-end gap-6 mb-6">
           <div className="flex-1 flex flex-col gap-6">
             <h1 className="text-[32px] md:text-[40px] font-bold leading-[1.3] text-black">
               Review your insurance offer
             </h1>
-            <div className="flex items-start gap-6 bg-transparent rounded-lg p-3">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6 bg-transparent rounded-lg p-3">
               <div className="w-16 h-16 flex-shrink-0">
                 <svg
                   width="64"
@@ -375,13 +375,13 @@ export default function Index() {
                   />
                 </svg>
               </div>
-              <div className="flex-1 flex flex-col gap-3">
+              <div className="flex flex-col gap-3 items-center md:items-start text-center md:text-left">
                 <p className="text-base font-medium text-black leading-5">
                   I'm Maria, your [state] licensed insurance advisor. I've
                   helped 656 customers protect their most important belongings.
                 </p>
-                <div className="flex flex-wrap items-start gap-6">
-                  <div className="flex items-start gap-2">
+                <div className="flex flex-wrap items-center md:items-start justify-center md:justify-start gap-6">
+                  <div className="flex items-center gap-2">
                     <svg
                       width="20"
                       height="20"
@@ -400,7 +400,7 @@ export default function Index() {
                       653-762-8273
                     </span>
                   </div>
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-center gap-2">
                     <svg
                       width="20"
                       height="20"
@@ -426,7 +426,7 @@ export default function Index() {
         </div>
 
         {/* Offer Summary */}
-        <div className="rounded-lg border border-[#E6E6E6] bg-white p-6 flex flex-col gap-5 mb-6">
+        <div className="rounded-lg border border-[#E6E6E6] bg-white p-3 md:p-6 flex flex-col gap-5 mb-6">
           <h2 className="text-[32px] font-bold leading-[40px] text-black">
             Offer summary
           </h2>
@@ -467,7 +467,7 @@ export default function Index() {
                     Home insurance(annual)
                   </span>
                 </div>
-                <span className="text-base font-medium leading-5 text-black text-right">
+                <span className="text-base font-medium leading-5 text-black text-left md:text-right">
                   $1,677.00
                 </span>
               </div>
@@ -480,7 +480,7 @@ export default function Index() {
                       <span className="text-base font-bold leading-5 text-[#10B981]">
                         Savings
                 </span>
-                      <span className="text-base font-bold leading-5 text-[#10B981] text-right">
+                      <span className="text-base font-bold leading-5 text-[#10B981] text-left md:text-right">
                         ${difference.amount.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -570,7 +570,7 @@ export default function Index() {
                 <span className="text-2xl font-bold leading-8 text-black flex-1">
                   Total
                 </span>
-                <span className="text-2xl font-bold leading-8 text-black text-right">
+                <span className="text-2xl font-bold leading-8 text-black text-left md:text-right">
                   $3,317.00
                 </span>
               </div>
@@ -585,8 +585,8 @@ export default function Index() {
         </div>
 
         {/* Home Insurance Details */}
-        <div className="rounded-lg border border-[#E6E6E6] p-5 md:p-6 flex flex-col gap-5 mb-6">
-          <div className="flex justify-between items-start px-1">
+        <div className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start px-3 md:px-1 gap-4">
             <div className="flex flex-col gap-1">
             <h2 className="text-2xl font-bold leading-8 text-[#111827]">
               Home insurance details
@@ -605,7 +605,7 @@ export default function Index() {
               <Dialog.Trigger asChild>
                 <button 
                   disabled={isLoading}
-                  className="px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-3 md:px-4 py-3 md:py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full md:w-auto mx-auto md:mx-0"
                 >
                   {isLoading ? (
                     <>
@@ -619,7 +619,7 @@ export default function Index() {
               </Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-6 w-full max-w-md z-50 shadow-xl">
+                <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-3 md:p-6 w-full max-w-md z-50 shadow-xl">
                   <Dialog.Title className="text-xl font-bold text-black mb-4">
                 Compare with your current policy
                   </Dialog.Title>
@@ -635,7 +635,7 @@ export default function Index() {
                   )}
 
                   {isLoading ? (
-                    <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3">
+                    <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-6 flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-2 border-[#156EEA] border-t-transparent rounded-full animate-spin"></div>
                       <p className="text-sm font-bold text-black">
                         Analyzing document...
@@ -644,7 +644,7 @@ export default function Index() {
                   ) : (
                     <div className="flex flex-col gap-4">
                       {/* Upload File Option */}
-                      <label className={`border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors`}>
+                      <label className={`border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors`}>
                         <input
                           id="file-upload-modal"
                           type="file"
@@ -697,7 +697,7 @@ export default function Index() {
 
                       {/* Take Picture Option */}
                       {!isCameraOpen && !capturedImage ? (
-                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors w-full bg-transparent"
+                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors w-full bg-transparent"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -747,7 +747,7 @@ export default function Index() {
                           </div>
                         </div>
                       ) : isCameraOpen ? (
-                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-4 flex flex-col items-center gap-4">
+                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-4 flex flex-col items-center gap-4">
                           <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
                             <video
                               ref={videoRef}
@@ -759,20 +759,20 @@ export default function Index() {
                           <div className="flex gap-3 w-full">
                             <button
                               onClick={stopCamera}
-                              className="flex-1 px-4 py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
+                              className="flex-1 px-3 md:px-4 py-3 md:py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={capturePhoto}
-                              className="flex-1 px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors"
+                              className="flex-1 px-3 md:px-4 py-3 md:py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors"
                             >
                               Capture
                             </button>
                           </div>
                         </div>
                       ) : capturedImage ? (
-                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-4 flex flex-col items-center gap-4">
+                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-4 flex flex-col items-center gap-4">
                           <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
                             <img
                               src={capturedImage}
@@ -786,14 +786,14 @@ export default function Index() {
                                 setCapturedImage(null);
                                 startCamera();
                               }}
-                              className="flex-1 px-4 py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
+                              className="flex-1 px-3 md:px-4 py-3 md:py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
                             >
                               Retake
                             </button>
                             <button
                               onClick={handleCapturedImage}
                               disabled={isLoading}
-                              className="flex-1 px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="flex-1 px-3 md:px-4 py-3 md:py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Use This Photo
                             </button>
@@ -807,7 +807,7 @@ export default function Index() {
                     <Dialog.Close asChild>
                       <button 
                         disabled={isLoading}
-                        className="px-4 py-2 text-sm font-medium text-[#666] hover:text-black disabled:opacity-50"
+                        className="px-3 md:px-4 py-3 md:py-2 text-sm font-medium text-[#666] hover:text-black disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -822,20 +822,20 @@ export default function Index() {
 
             {/* Comparison Title */}
             {extractedData && extractedData.status !== "failed" && (
-              <div className="px-4 py-2">
+              <div className="px-3 md:px-4 py-3 md:py-2">
                 <h2 className="text-2xl font-bold text-black">Compare coverages</h2>
               </div>
             )}
 
             {/* Carrier Comparison */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-2`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
+            <div className="flex justify-between items-start px-3 md:px-4 py-3 md:py-2">
               <span className="text-base font-bold leading-5 text-black">
                 Carrier
               </span>
               {extractedData && extractedData.status !== "failed" ? (
-                <>
+                <div className="flex flex-row gap-4 items-start">
                   {/* Proposed Carrier */}
-                  <div className="flex flex-col items-end">
+                  <div className="flex flex-col items-end text-right">
                     {(() => {
                       const carrierName = "foremost";
                       const logoUrl = CARRIER_LOGOS[carrierName];
@@ -862,13 +862,15 @@ export default function Index() {
                           ) : (
                             <span className="text-black font-bold text-base text-right">FOREMOST</span>
                           )}
-                          <span className="text-sm font-semibold text-black mt-1 text-right">Proposed</span>
+                          {extractedData.policy.carrier?.value && (
+                            <span className="text-sm font-semibold text-black mt-1 text-right">Proposed</span>
+                          )}
                         </>
                       );
                     })()}
                 </div>
                   {/* Current Carrier - with delete on hover */}
-                  <div className="flex flex-col items-end group relative">
+                  <div className="flex flex-col items-end text-right group relative">
                     {extractedData.policy.carrier?.value ? (
                       (() => {
                         const carrierName = String(extractedData.policy.carrier.value).toLowerCase().trim();
@@ -968,7 +970,7 @@ export default function Index() {
                       </>
                     )}
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="flex flex-col items-start">
                   {(() => {
@@ -1005,7 +1007,9 @@ export default function Index() {
                             {displayName}
                           </span>
                         )}
-                        <span className="text-sm font-semibold text-black mt-1">Proposed</span>
+                        {extractedData && extractedData.policy.carrier?.value && (
+                          <span className="text-sm font-semibold text-black mt-1">Proposed</span>
+                        )}
                       </>
                     );
                   })()}
@@ -1014,42 +1018,42 @@ export default function Index() {
                         </div>
 
             <div className="flex flex-col gap-5">
-              <div className="flex justify-between items-start px-4">
+              <div className="flex justify-between items-start px-3 md:px-4">
                 <span className="text-base font-bold leading-5 text-black">
                   Policy Basics
                 </span>
                         </div>
 
               <div className="flex flex-col">
-                <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
-                  <span className="text-base font-medium leading-5 text-black">
+                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
+                  <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Policy Start Date
                         </span>
                   {extractedData && extractedData.status !== "failed" ? (
-                    <>
-                      <span className="text-base font-medium leading-5 text-black text-right">
+                    <div className="flex flex-row gap-4">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                         01/01/2026
                       </span>
-                      <span className="text-base font-medium leading-5 text-black text-right min-w-[160px]">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right min-w-[160px]">
                         {extractedData.policy.effectiveDate?.value 
                           ? normalizeDate(extractedData.policy.effectiveDate.value)
                           : "Unknown"}
                       </span>
-                    </>
+                    </div>
                   ) : (
-                    <span className="text-base font-medium leading-5 text-black">
+                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                       01/01/2026
                           </span>
                         )}
                       </div>
-                <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
                   <span className="text-base font-medium leading-5 text-black">
                     Deductible
                   </span>
                   {extractedData && extractedData.status !== "failed" ? (
-                    <>
+                    <div className="flex flex-row gap-4 items-center">
                       <div className="flex items-center justify-end gap-2">
-                        <span className="text-base font-medium leading-5 text-black text-right flex-1">
+                        <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                           $1,000
                         </span>
                         <div className="flex-shrink-0 w-4">
@@ -1076,31 +1080,31 @@ export default function Index() {
                             return null;
                           })()}
                         </div>
-                        </div>
-                      <span className="text-base font-medium leading-5 text-black text-right">
+                      </div>
+                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right min-w-[160px]">
                         {extractedData.coverages.deductible?.value
                           ? `$${extractedData.coverages.deductible.value.toLocaleString()}`
                           : "Unknown"}
                         </span>
-                    </>
+                    </div>
                   ) : (
-                    <span className="text-base font-medium leading-5 text-black">
+                    <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                       $1,000
                           </span>
                         )}
                       </div>
                         </div>
 
-              <div className="flex justify-between items-start px-4 py-2">
+              <div className="flex flex-row justify-between items-center px-3 md:px-4 py-3 md:py-2">
                 <span className="text-base font-bold leading-5 text-black">
                   Standard coverages
                 </span>
                 {extractedData && extractedData.status !== "failed" ? (
-                  <div className="grid gap-4" style={{ gridTemplateColumns: '160px 160px', display: 'grid' }}>
+                  <div className="grid gap-2 md:gap-4" style={{ gridTemplateColumns: 'minmax(120px, 160px) minmax(120px, 160px)', display: 'grid' }}>
                     {/* Empty space for alignment - headers are shown in carrier section */}
                         </div>
                 ) : (
-                  <span className="text-base font-bold leading-5 text-black text-right">
+                  <span className="text-base font-normal leading-5 text-black text-right">
                     Coverage Limit
                   </span>
                 )}
@@ -1136,16 +1140,16 @@ export default function Index() {
                       return (
                         <div
                           key={item.key}
-                      className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3 ${idx % 2 === 0 ? "bg-[#F2F2F2]" : ""}`}
-                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}
+                      className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 0 ? "bg-[#F2F2F2]" : ""}`}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}
                         >
-                      <span className="text-base font-medium leading-5 text-black">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black">
                               {item.label}
                             </span>
                       {extractedData && extractedData.status !== "failed" ? (
                         <>
                           <div className="flex items-center justify-end gap-2">
-                            <span className="text-base font-medium leading-5 text-black text-right flex-1">
+                            <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                               ${item.value.toLocaleString()}
                               </span>
                             <div className="flex-shrink-0 w-4">
@@ -1170,13 +1174,13 @@ export default function Index() {
                               })()}
                           </div>
                           </div>
-                          <span className="text-base font-medium leading-5 text-black text-right">
+                          <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                             {currentValue?.value
                               ? typeof currentValue.value === "number"
                                 ? `$${currentValue.value.toLocaleString()}`
                                 : `$${currentValue.value}`
                               : "Unknown"}
-                            </span>
+                          </span>
                         </>
                       ) : (
                         <span className="text-base font-medium leading-5 text-black">
@@ -1188,8 +1192,8 @@ export default function Index() {
                     })}
                   </div>
 
-              <div className="px-4 py-2">
-                <span className="text-base font-bold leading-5 text-black">
+              <div className="px-3 md:px-4 py-3 md:py-2">
+                <span className="text-base font-bold leading-5 text-black block">
                   Additional coverages
                     </span>
               </div>
@@ -1258,16 +1262,16 @@ export default function Index() {
                       return (
                         <div
                           key={item.key}
-                      className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex justify-between"} items-start px-4 py-3 ${idx % 2 === 1 ? "bg-[#F2F2F2]" : ""}`}
-                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}
+                      className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 ${idx % 2 === 1 ? "bg-[#F2F2F2]" : ""}`}
+                      style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}
                         >
-                      <span className="text-base font-medium leading-5 text-black">
+                      <span className="text-base font-normal md:font-medium leading-5 text-black">
                               {item.label}
                             </span>
                       {extractedData && extractedData.status !== "failed" ? (
                         <>
                           <div className="flex items-center justify-end gap-2 min-w-[160px]">
-                            <span className={`text-base font-medium leading-5 text-right flex-1 ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
+                            <span className={`text-base font-normal md:font-medium leading-5 text-right ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
                               {item.isIncluded ? `$${item.value?.toLocaleString()}` : "Not Included"}
                               </span>
                             <div className="flex-shrink-0 w-4">
@@ -1321,7 +1325,7 @@ export default function Index() {
                               })()}
                           </div>
                           </div>
-                          <span className={`text-base font-medium leading-5 text-right min-w-[160px] ${
+                          <span className={`text-base font-normal md:font-medium leading-5 text-right min-w-[160px] ${
                             (() => {
                               // If explicitly excluded, show as "Not Included" in gray
                               if (isExcluded) {
@@ -1348,7 +1352,7 @@ export default function Index() {
                             </span>
                         </>
                       ) : (
-                        <span className={`text-base font-medium leading-5 min-w-[160px] text-right ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
+                        <span className={`text-base font-normal md:font-medium leading-5 min-w-[160px] text-right ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
                           {item.isIncluded ? `$${item.value?.toLocaleString()}` : "Not Included"}
                             </span>
                       )}
@@ -1595,7 +1599,7 @@ export default function Index() {
                   }
                   
                   return (
-                    <div className="mx-4 mt-4 p-4 bg-[#EFF6FF] border border-[#3B82F6] rounded-lg">
+                    <div className="mx-3 md:mx-4 mt-3 md:mt-4 p-3 md:p-4 bg-[#EFF6FF] border border-[#3B82F6] rounded-lg">
                       <div className="flex items-start gap-3">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 mt-0.5">
                           <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1653,7 +1657,7 @@ export default function Index() {
 
             {/* Loading State - Show inline when processing */}
             {isLoading && (
-              <div className="flex items-center justify-center py-4 gap-2">
+              <div className="flex items-center justify-center py-3 md:py-4 gap-2">
                 <div
                   className="w-2 h-2 bg-[#156EEA] rounded-full animate-bounce"
                   style={{ animationDelay: "0s" }}
@@ -1675,8 +1679,8 @@ export default function Index() {
             <div className="h-px bg-[#D9D9D9]"></div>
 
             {/* Yearly Premium - Show comparison if data available */}
-            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-4" : "flex items-start gap-1 justify-between"} items-start px-4 py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: '1fr 160px 160px', display: 'grid' } : {}}>
-              <div className="flex flex-col gap-1">
+            <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-col md:flex-row items-start gap-1 justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)', display: 'grid' } : {}}>
+              <div className="flex flex-col gap-1 mb-2 md:mb-0">
               <span className="text-2xl font-bold leading-8 text-[#111827]">
                 Yearly premium
               </span>
@@ -1699,8 +1703,8 @@ export default function Index() {
               </div>
               {extractedData && extractedData.status !== "failed" && !isLoading ? (
                 <>
-                  <div className="flex items-center justify-end gap-2">
-                    <span className="text-2xl font-bold leading-8 text-right text-[#111827] flex-1">
+                  <div className="flex items-center justify-start md:justify-end gap-2">
+                    <span className="text-2xl font-bold leading-8 text-left md:text-right text-[#111827] flex-1">
                       $1,677.00
                     </span>
                     <div className="flex-shrink-0 w-5">
@@ -1727,7 +1731,7 @@ export default function Index() {
                       })()}
                     </div>
                   </div>
-                  <span className="text-2xl font-bold leading-8 text-[#111827] text-right">
+                  <span className="text-2xl font-bold leading-8 text-[#111827] text-left md:text-right">
                     {extractedData.policy.premium?.value
                       ? typeof extractedData.policy.premium.value === "number"
                         ? `$${extractedData.policy.premium.value.toLocaleString("en-US", {
@@ -1748,60 +1752,91 @@ export default function Index() {
         </div>
 
         {/* Umbrella Insurance Details */}
-        <div className="rounded-lg border border-[#E6E6E6] p-5 md:p-6 flex flex-col gap-5 mb-6">
-          <div className="flex flex-col gap-1 px-1">
+        <div className="rounded-lg border border-[#E6E6E6] p-3 md:p-6 flex flex-col gap-5 mb-6">
+          <div className="flex flex-col gap-1 px-3 md:px-1">
             <h2 className="text-2xl font-bold leading-8 text-[#111827]">
               Umbrella insurance details
             </h2>
           </div>
 
           <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-start px-1">
-              <span className="text-base font-bold leading-5 text-black">
+            <div className="flex justify-between items-start px-3 md:px-1">
+              <span className="text-base font-normal leading-5 text-black">
                 Carrier
               </span>
-              <div className="w-[120px] h-[30px] bg-[#0A3066] flex items-center justify-center rounded">
-                <span className="text-white font-bold text-sm">ALLSTATE</span>
-              </div>
+              {(() => {
+                const carrierName = "allstate";
+                const logoUrl = CARRIER_LOGOS[carrierName];
+                
+                return (
+                  <>
+                    {logoUrl ? (
+                      <img 
+                        src={logoUrl} 
+                        alt="ALLSTATE"
+                        className="max-h-[30px] object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('.carrier-text-fallback')) {
+                            const div = document.createElement('div');
+                            div.className = 'w-[120px] h-[30px] bg-[#0A3066] flex items-center justify-center rounded';
+                            const span = document.createElement('span');
+                            span.className = 'text-white font-bold text-sm';
+                            span.textContent = 'ALLSTATE';
+                            div.appendChild(span);
+                            parent.appendChild(div);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-[120px] h-[30px] bg-[#0A3066] flex items-center justify-center rounded">
+                        <span className="text-white font-bold text-sm">ALLSTATE</span>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             <div className="flex flex-col gap-5">
-              <div className="flex justify-between items-start px-1">
+              <div className="flex justify-between items-start px-3 md:px-1">
                 <span className="text-base font-bold leading-5 text-black">
                   Policy Basics
                 </span>
               </div>
 
               <div className="flex flex-col">
-                <div className="flex justify-between items-start px-1 py-2">
-                  <span className="text-base font-medium leading-5 text-black">
+                <div className="flex justify-between items-start px-3 md:px-1 py-3 md:py-2">
+                  <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Policy Start Date
                   </span>
-                  <span className="text-base font-medium leading-5 text-black">
+                  <span className="text-base font-normal md:font-medium leading-5 text-black">
                     01/01/2026
                   </span>
                 </div>
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
-                  <span className="text-base font-medium leading-5 text-black">
+                <div className="flex justify-between items-start px-3 md:px-1 py-3 md:py-2 bg-[#F2F2F2]">
+                  <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Deductible
                   </span>
-                  <span className="text-base font-medium leading-5 text-black">
+                  <span className="text-base font-normal md:font-medium leading-5 text-black">
                     $0
                   </span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start px-1">
-                <span className="text-base font-bold leading-5 text-black">
+              <div className="flex justify-between items-start px-3 md:px-1">
+                <span className="text-base font-normal leading-5 text-black">
                   Coverages
                 </span>
-                <span className="text-base font-bold leading-5 text-black text-right">
+                <span className="text-base font-normal leading-5 text-black text-right ml-auto md:ml-0">
                   Coverage Limit
                 </span>
               </div>
 
               <div className="flex flex-col">
-                <div className="flex justify-between items-start px-1 py-2 bg-[#F2F2F2]">
+                <div className="flex justify-between items-start px-3 md:px-1 py-3 md:py-2 bg-[#F2F2F2]">
                   <span className="text-base font-medium leading-5 text-black flex-1">
                     Extended replacement cost on content
                   </span>
@@ -1826,7 +1861,7 @@ export default function Index() {
         </div>
 
         {/* Want to Save More */}
-        <div className="rounded-lg bg-[#E8F8E8] p-6 md:p-10 flex flex-col md:flex-row items-start gap-6 mb-6">
+        <div className="rounded-lg bg-[#E8F8E8] p-3 md:p-10 flex flex-col md:flex-row items-start gap-6 mb-6">
           <div className="flex-1 flex flex-col gap-3">
             <h2 className="text-[28px] md:text-[32px] font-bold leading-[1.25] text-black">
               Want to save even more?
@@ -1837,14 +1872,14 @@ export default function Index() {
               see if using two carriers gets better rates than bundling. Chat
               with a licensed advisor to get a free auto quote.
             </p>
-            <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 hover:bg-[#1257c7] transition-colors">
+            <button className="flex px-3 md:px-5 py-3 md:py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 hover:bg-[#1257c7] transition-colors">
               Contact Your Advisor
             </button>
           </div>
         </div>
 
         {/* Why Customers Choose Matic */}
-        <div className="rounded-lg bg-[#F1EBFF] p-6 md:p-10 flex flex-col md:flex-row items-start gap-10 mb-6">
+        <div className="rounded-lg bg-[#F1EBFF] p-3 md:p-10 flex flex-col md:flex-row items-start gap-10 mb-6">
           <div className="flex-1 flex flex-col gap-10">
             <h2 className="text-[28px] md:text-[32px] font-bold leading-[1.25] text-black">
               Why customers choose Matic
@@ -1886,7 +1921,7 @@ export default function Index() {
         </div>
 
         {/* Footer Disclaimer */}
-        <div className="rounded-lg bg-[#F2F2F2] p-6 md:p-10 flex flex-col gap-3">
+        <div className="rounded-lg bg-[#F2F2F2] p-3 md:p-10 flex flex-col gap-3">
           <p className="text-sm font-medium leading-5 text-[#333]">
             Quotes are estimates only. Quotes are subject to change without
             notice. Your actual rate, payment and coverage may be different.
@@ -1903,13 +1938,13 @@ export default function Index() {
       </div>
 
       {/* Select Offer - Sticky Bottom Bar */}
-      <div className="sticky bottom-0 left-0 right-0 w-full flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-4 md:pt-5 px-5 md:px-20 pb-5 border-t border-[#D9D9D9] z-40 shadow-lg">
+      <div className="sticky bottom-0 left-0 right-0 w-full flex flex-col md:flex-row items-start md:items-center gap-5 bg-white pt-3 md:pt-5 px-3 md:px-20 pb-3 md:pb-5 border-t border-[#D9D9D9] z-40 shadow-lg">
         <p className="text-base font-medium leading-5 text-black flex-1">
           By clicking "Select Offer," you acknowledge that you have reviewed the
           details of your policy offer, including all coverage limits,
           deductibles, and premiums.
         </p>
-        <button className="flex px-5 py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors">
+        <button className="flex px-3 md:px-5 py-3 md:py-3 justify-center items-center gap-3 rounded bg-[#156EEA] text-white text-base font-bold leading-5 whitespace-nowrap hover:bg-[#1257c7] transition-colors w-full md:w-auto">
           Select Offer
         </button>
       </div>
