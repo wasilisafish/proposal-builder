@@ -195,36 +195,79 @@ export default function Index() {
     if (selectedPhotos.size === 0) return;
 
     try {
-      // Process selected photos in order
+      setIsLoading(true);
+      setParseError(null);
+      setExtractedData(null);
+
+      // Process all selected photos in order
       const selectedIndices = Array.from(selectedPhotos).sort((a, b) => a - b);
       
-      // For now, process the first selected photo (can be extended to handle multiple)
-      const firstSelectedIndex = selectedIndices[0];
-      const imageDataUrl = capturedImages[firstSelectedIndex];
+      // Convert all selected photos to Files
+      const files: File[] = [];
+      for (const index of selectedIndices) {
+        const imageDataUrl = capturedImages[index];
+        if (!imageDataUrl) continue;
+
+        const response = await fetch(imageDataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `captured-photo-${index + 1}.jpg`, { type: 'image/jpeg' });
+        files.push(file);
+      }
+
+      if (files.length === 0) {
+        setParseError("No valid photos selected");
+        setIsLoading(false);
+        return;
+      }
+
+      // Send all files to the server
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append("pdf", file); // Server accepts any field name
+      });
+
+      const response = await fetch("/api/extract-policy", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log("Parse response:", result);
       
-      if (!imageDataUrl) return;
-
-      // Convert data URL to File
-      const response = await fetch(imageDataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
-
-      // Create a synthetic event for handleFileUpload
-      const syntheticEvent = {
-        target: {
-          files: [file],
-        },
-      } as React.ChangeEvent<HTMLInputElement>;
-
-      await handleFileUpload(syntheticEvent);
+      if (result.status === "failed") {
+        const errorMsg = result.error || "Failed to extract policy data";
+        console.error("Extraction failed:", errorMsg);
+        setParseError(errorMsg);
+        setExtractedData(null);
+      } else {
+        setExtractedData(result);
+        setParseError(null);
+        setLastUpdated(
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        );
+        // Close modal after successful extraction
+        setModalOpen(false);
+      }
       
       // Reset after processing
       setCapturedImages([]);
       setSelectedPhotos(new Set());
       setShowPhotoSelection(false);
     } catch (error) {
-      console.error("Error processing captured image:", error);
-      setParseError("Error processing captured image");
+      console.error("Error processing captured images:", error);
+      const errorMsg = error instanceof Error ? error.message : "Error processing captured images";
+      setParseError(errorMsg);
+      setExtractedData(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -906,15 +949,15 @@ export default function Index() {
             }}>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black z-[100]" />
-                <Dialog.Content className="fixed inset-0 z-[100] bg-black flex flex-col p-0 m-0 max-w-none w-screen h-screen rounded-none">
+                <Dialog.Content className="fixed inset-0 z-[100] bg-black flex flex-col p-0 m-0 max-w-none w-screen h-[100dvh] rounded-none overflow-hidden">
                   {/* Camera Preview - Full Screen */}
-                  <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
+                  <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden min-h-0">
                     <video
                       ref={videoRef}
                       autoPlay
                       playsInline
                       className="w-full h-full object-contain"
-                      style={{ maxHeight: '100vh' }}
+                      style={{ maxHeight: '100dvh' }}
                     />
                     
                     {/* Document Guide Overlay (optional - helps with A4 alignment) */}
@@ -930,14 +973,19 @@ export default function Index() {
 
                     {/* Captured Photos Count Badge */}
                     {capturedImages.length > 0 && (
-                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium z-10">
                         {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''} captured
                       </div>
                     )}
                   </div>
 
                   {/* Controls - Fixed at Bottom */}
-                  <div className="bg-black/90 backdrop-blur-sm p-4 pb-8 safe-area-inset-bottom">
+                  <div 
+                    className="bg-black/90 backdrop-blur-sm p-4 flex-shrink-0"
+                    style={{ 
+                      paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px) + 1rem)' 
+                    }}
+                  >
                     <div className="flex flex-col gap-4 max-w-md mx-auto">
                       {/* Instructions */}
                       <div className="text-center text-white text-sm">
@@ -948,36 +996,44 @@ export default function Index() {
                       </div>
 
                       {/* Control Buttons */}
-                      <div className="flex gap-4 items-center justify-center">
-                        {/* Cancel/Done Button */}
-                        <button
-                          onClick={stopCamera}
-                          className="px-6 py-3 text-white text-sm font-medium hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                          {capturedImages.length > 0 ? 'Done' : 'Cancel'}
-                        </button>
-
-                        {/* Capture Button - Large Circular */}
-                        <button
-                          onClick={capturePhoto}
-                          className="w-16 h-16 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
-                          aria-label="Capture photo"
-                        >
-                          <div className="w-12 h-12 rounded-full bg-white"></div>
-                        </button>
-
-                        {/* View Photos Button (if photos captured) */}
-                        {capturedImages.length > 0 && (
+                      <div className="grid grid-cols-3 items-center">
+                        {/* Cancel/Done Button - Left */}
+                        <div className="flex justify-start">
                           <button
-                            onClick={() => {
-                              stopCamera();
-                              setShowPhotoSelection(true);
-                            }}
+                            onClick={stopCamera}
                             className="px-6 py-3 text-white text-sm font-medium hover:bg-white/10 rounded-lg transition-colors"
                           >
-                            View ({capturedImages.length})
+                            {capturedImages.length > 0 ? 'Done' : 'Cancel'}
                           </button>
-                        )}
+                        </div>
+
+                        {/* Capture Button - Always Centered */}
+                        <div className="flex justify-center">
+                          <button
+                            onClick={capturePhoto}
+                            className="w-16 h-16 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
+                            aria-label="Capture photo"
+                          >
+                            <div className="w-12 h-12 rounded-full bg-white"></div>
+                          </button>
+                        </div>
+
+                        {/* View Photos Button - Right (if photos captured) */}
+                        <div className="flex justify-end">
+                          {capturedImages.length > 0 ? (
+                            <button
+                              onClick={() => {
+                                stopCamera();
+                                setShowPhotoSelection(true);
+                              }}
+                              className="px-6 py-3 text-white text-sm font-medium hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                              View ({capturedImages.length})
+                            </button>
+                          ) : (
+                            <div></div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -989,9 +1045,9 @@ export default function Index() {
             <Dialog.Root open={showPhotoSelection} onOpenChange={setShowPhotoSelection}>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-                <Dialog.Content className="fixed inset-0 z-50 bg-white flex flex-col p-0 m-0 max-w-none w-screen h-screen rounded-none">
+                <Dialog.Content className="fixed inset-0 z-50 bg-white flex flex-col p-0 m-0 max-w-none w-screen h-[100dvh] rounded-none overflow-hidden">
                   {/* Header */}
-                  <div className="flex items-center justify-between p-4 border-b border-[#D9D9D9]">
+                  <div className="flex items-center justify-between p-4 border-b border-[#D9D9D9] flex-shrink-0">
                     <Dialog.Title className="text-lg font-bold text-black">
                       Select Photos ({selectedPhotos.size} selected)
                     </Dialog.Title>
@@ -1004,8 +1060,8 @@ export default function Index() {
                     </Dialog.Close>
                   </div>
 
-                  {/* Photos Grid - Full Screen */}
-                  <div className="flex-1 overflow-y-auto p-4">
+                  {/* Photos Grid - Scrollable */}
+                  <div className="flex-1 overflow-y-auto p-4 min-h-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
                       {capturedImages.map((image, index) => (
                         <div
@@ -1045,8 +1101,13 @@ export default function Index() {
                     </div>
                   </div>
 
-                  {/* Footer */}
-                  <div className="border-t border-[#D9D9D9] p-4 flex items-center justify-between">
+                  {/* Footer - Fixed at Bottom */}
+                  <div 
+                    className="border-t border-[#D9D9D9] p-4 flex items-center justify-between flex-shrink-0 bg-white"
+                    style={{ 
+                      paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px) + 1rem)' 
+                    }}
+                  >
                     <button
                       onClick={() => {
                         setCapturedImages([]);

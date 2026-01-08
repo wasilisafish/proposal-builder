@@ -688,10 +688,12 @@ function imageBufferToDataURL(buffer: Buffer, mimeType: string): string {
 
 router.post(
   "/extract-policy",
-  upload.single("pdf"),
+  upload.any(),
   async (req: Request, res: Response) => {
     try {
-      if (!req.file) {
+      const files = req.files as Express.Multer.File[];
+      
+      if (!files || files.length === 0) {
         return res.status(400).json({
           status: "failed",
           document: {
@@ -704,66 +706,69 @@ router.post(
           missingFields: [],
           notes: [],
           extractionId: "",
-          error: "No file provided",
+          error: "No files provided",
         });
       }
 
-      // Validate file
-      const validation = validateFile(req.file);
-      if (!validation.valid) {
-        return res.status(400).json({
-          status: "failed",
-          document: {
-            id: req.file.originalname,
-            fileName: req.file.originalname,
-            uploadedAt: new Date().toISOString(),
-          },
-          policy: {},
-          coverages: {},
-          missingFields: [],
-          notes: [],
-          extractionId: "",
-          error: validation.error,
-        });
+      // Validate all files
+      for (const file of files) {
+        const validation = validateFile(file);
+        if (!validation.valid) {
+          return res.status(400).json({
+            status: "failed",
+            document: {
+              id: file.originalname,
+              fileName: file.originalname,
+              uploadedAt: new Date().toISOString(),
+            },
+            policy: {},
+            coverages: {},
+            missingFields: [],
+            notes: [],
+            extractionId: "",
+            error: validation.error,
+          });
+        }
       }
 
       const documentId = `doc_${Date.now()}`;
       const uploadedAt = new Date().toISOString();
 
-      // Prepare document for Vision API - convert PDFs to images first (Vision API only supports images)
-      let contentItems: Array<{ type: string; [key: string]: any }>;
+      // Prepare all documents for Vision API - convert PDFs to images and process all images
+      let contentItems: Array<{ type: string; [key: string]: any }> = [];
 
-      if (req.file.mimetype === "application/pdf") {
-        console.log("Converting PDF to images for Vision API analysis...");
-        // Vision API only supports images, so convert PDF pages to images
-        const images = await convertPDFToImages(req.file.buffer);
-        console.log(`Converted PDF to ${images.length} image(s)`);
-        
-        // Create content items for all pages
-        contentItems = images.map((image) => ({
-          type: "image_url",
-          image_url: {
-            url: image,
-          },
-        }));
-      } else if (req.file.mimetype.startsWith("image/")) {
-        console.log("Preparing image for Vision API analysis...");
-        const dataURL = imageBufferToDataURL(req.file.buffer, req.file.mimetype);
-        contentItems = [
-          {
+      for (const file of files) {
+        if (file.mimetype === "application/pdf") {
+          console.log("Converting PDF to images for Vision API analysis...");
+          // Vision API only supports images, so convert PDF pages to images
+          const images = await convertPDFToImages(file.buffer);
+          console.log(`Converted PDF to ${images.length} image(s)`);
+          
+          // Add all pages to content items
+          const pdfContentItems = images.map((image) => ({
+            type: "image_url",
+            image_url: {
+              url: image,
+            },
+          }));
+          contentItems.push(...pdfContentItems);
+        } else if (file.mimetype.startsWith("image/")) {
+          console.log("Preparing image for Vision API analysis...");
+          const dataURL = imageBufferToDataURL(file.buffer, file.mimetype);
+          contentItems.push({
             type: "image_url",
             image_url: {
               url: dataURL,
             },
-          },
-        ];
-      } else {
-        throw new Error("Unsupported file type");
+          });
+        } else {
+          throw new Error(`Unsupported file type: ${file.mimetype}`);
+        }
       }
 
       console.log(`Analyzing ${contentItems.length} image(s) with OpenAI Vision API to extract coverages, deductibles, and premium...`);
 
-      // Extract structured fields directly using Vision API
+      // Extract structured fields directly using Vision API (all images analyzed together)
       const {
         policy,
         coverages,
@@ -787,7 +792,7 @@ router.post(
         status,
         document: {
           id: documentId,
-          fileName: req.file.originalname,
+          fileName: files.length === 1 ? files[0].originalname : `${files.length} files`,
           uploadedAt,
         },
         policy,
