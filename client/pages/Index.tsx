@@ -39,7 +39,7 @@ function EditableValue({
   displayValue?: string;
   className?: string;
   style?: React.CSSProperties;
-  type?: "text" | "currency" | "date";
+  type?: "text" | "currency" | "currency-coverage" | "date";
   placeholder?: string;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -67,6 +67,16 @@ function EditableValue({
       return `$${value}`;
     }
     
+    if (type === "currency-coverage") {
+      if (typeof value === "number") {
+        return `$${value.toLocaleString("en-US", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`;
+      }
+      return `$${value}`;
+    }
+    
     if (type === "date") {
       return String(value);
     }
@@ -79,7 +89,7 @@ function EditableValue({
   };
 
   const handleClick = () => {
-    if (type === "currency" || (typeof value === "number" && type === "text")) {
+    if (type === "currency" || type === "currency-coverage" || (typeof value === "number" && type === "text")) {
       // For currency/number, remove $ and commas for editing
       const numValue = typeof value === "number" ? value : 
         typeof value === "string" ? parseFloat(value.replace(/[$,]/g, "")) : null;
@@ -93,7 +103,7 @@ function EditableValue({
   const handleSave = () => {
     if (editValue.trim() === "") {
       onSave(null);
-    } else if (type === "currency" || (typeof value === "number" && type === "text")) {
+    } else if (type === "currency" || type === "currency-coverage" || (typeof value === "number" && type === "text")) {
       const numValue = parseFloat(editValue.replace(/[$,]/g, ""));
       if (!isNaN(numValue)) {
         onSave(numValue);
@@ -1584,7 +1594,7 @@ export default function Index() {
                         value={getCurrentValue("deductible", extractedData.coverages.deductible)}
                         onSave={(val) => saveEditedValue("deductible", val)}
                         className="text-base font-normal md:font-medium leading-5 text-black text-right"
-                        type="currency"
+                        type="currency-coverage"
                       />
                     </>
                   ) : (
@@ -1678,7 +1688,7 @@ export default function Index() {
                             value={getCurrentValue(item.key, currentValue)}
                             onSave={(val) => saveEditedValue(item.key, val)}
                             className="text-base font-normal md:font-medium leading-5 text-black text-right"
-                            type="currency"
+                            type="currency-coverage"
                           />
                         </>
                       ) : (
@@ -1850,12 +1860,12 @@ export default function Index() {
                                 displayValue={(() => {
                                   const val = getCurrentValue(item.key, currentValue);
                                   if (val === null) return "Unknown";
-                                  if (typeof val === "number") return `$${val.toLocaleString()}`;
+                                  if (typeof val === "number") return `$${val.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                                   if (val === "Not Included") return "Not Included";
                                   return `$${val}`;
                                 })()}
                                 className="text-base font-normal md:font-medium leading-5 text-black text-right"
-                                type="currency"
+                                type="currency-coverage"
                               />
                             )}
                             </span>
