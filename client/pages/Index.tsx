@@ -876,7 +876,7 @@ export default function Index() {
                           ) : (
                             <span className="text-black font-bold text-sm md:text-base text-right whitespace-nowrap">FOREMOST</span>
                           )}
-                          {extractedData.policy.carrier?.value && (
+                          {extractedData && extractedData.status !== "failed" && (
                             <span className="text-xs md:text-sm font-semibold text-black mt-1 text-right whitespace-nowrap">Proposed</span>
                           )}
                         </>
