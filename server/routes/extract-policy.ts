@@ -59,29 +59,25 @@ async function convertPDFToImages(buffer: Buffer): Promise<string[]> {
     await writeFile(pdfPath, buffer);
     await mkdir(outputDir, { recursive: true });
 
-    // Find pdftocairo - check common locations and PATH
+    // Find pdftocairo - try which first, then common locations
     let pdftocairoPath = "pdftocairo";
-    const possiblePaths = [
-      "/usr/bin/pdftocairo",
-      "/usr/local/bin/pdftocairo",
-      "/nix/store/*/bin/pdftocairo",
-      "pdftocairo", // fallback to PATH
-    ];
-    
-    // Try to find pdftocairo in common locations
-    for (const path of possiblePaths) {
-      try {
-        if (path.includes("*")) {
-          // For nix store paths, try execSync to check if command exists
-          execSync(`which pdftocairo`, { stdio: "pipe" });
-          pdftocairoPath = "pdftocairo";
-          break;
-        } else if (existsSync(path)) {
+    try {
+      // Try to find pdftocairo in PATH
+      const whichResult = execSync("which pdftocairo", { encoding: "utf-8", stdio: "pipe" }).trim();
+      if (whichResult) {
+        pdftocairoPath = whichResult;
+      }
+    } catch {
+      // If not in PATH, try common locations
+      const commonPaths = [
+        "/usr/bin/pdftocairo",
+        "/usr/local/bin/pdftocairo",
+      ];
+      for (const path of commonPaths) {
+        if (existsSync(path)) {
           pdftocairoPath = path;
           break;
         }
-      } catch {
-        continue;
       }
     }
 
