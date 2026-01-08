@@ -9,6 +9,20 @@ const CARRIER_LOGOS: Record<string, string> = {
   "safeco": "https://maticinsurance.sirv.com/carriers/regular/safeco.svg",
 };
 
+// Helper function to extract carrier brand name from full carrier name
+function getCarrierBrandName(fullName: string): string {
+  const normalized = fullName.toLowerCase().trim();
+  
+  // Check for known carrier brands
+  for (const brand of Object.keys(CARRIER_LOGOS)) {
+    if (normalized.includes(brand)) {
+      return brand;
+    }
+  }
+  
+  return normalized;
+}
+
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractionResponse | null>(
@@ -63,14 +77,14 @@ export default function Index() {
         setParseError(errorMsg);
         setExtractedData(null);
       } else {
-        setExtractedData(response);
+      setExtractedData(response);
         setParseError(null);
-        setLastUpdated(
-          new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        );
+      setLastUpdated(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
         // Close modal after successful extraction
         setModalOpen(false);
       }
@@ -868,14 +882,15 @@ export default function Index() {
                         </>
                       );
                     })()}
-                  </div>
+                </div>
                   {/* Current Carrier - with delete on hover */}
-                  <div className="flex flex-col items-end text-right group relative">
+                  <div className="flex flex-col items-end text-right group relative min-w-0">
                     {extractedData.policy.carrier?.value ? (
                       (() => {
-                        const carrierName = String(extractedData.policy.carrier.value).toLowerCase().trim();
-                        const logoUrl = CARRIER_LOGOS[carrierName];
-                        const displayName = extractedData.policy.carrier.value;
+                        const fullCarrierName = String(extractedData.policy.carrier.value);
+                        const carrierBrand = getCarrierBrandName(fullCarrierName);
+                        const logoUrl = CARRIER_LOGOS[carrierBrand];
+                        const displayName = fullCarrierName;
                         
                         return (
                           <>
@@ -883,7 +898,7 @@ export default function Index() {
                               <img 
                                 src={logoUrl} 
                                 alt={displayName}
-                                className="max-h-[16px] md:max-h-[24px] object-contain mb-1 ml-auto"
+                                className="max-h-[16px] md:max-h-[24px] object-contain mb-1 ml-auto flex-shrink-0"
                                 title={displayName}
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -891,7 +906,7 @@ export default function Index() {
                                   const parent = target.parentElement;
                                   if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                     const span = document.createElement('span');
-                                    span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base truncate block w-full text-right whitespace-nowrap';
+                                    span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base truncate block w-full text-right min-w-0';
                                     span.textContent = displayName || 'Unknown';
                                     span.title = displayName || 'Unknown';
                                     parent.insertBefore(span, parent.firstChild);
@@ -900,7 +915,7 @@ export default function Index() {
                               />
                             ) : (
                               <span 
-                                className="text-black font-bold text-sm md:text-base truncate block w-full text-right whitespace-nowrap" 
+                                className="text-black font-bold text-sm md:text-base truncate block w-full text-right min-w-0 overflow-hidden" 
                                 title={displayName}
                               >
                                 {displayName}
@@ -953,20 +968,20 @@ export default function Index() {
                               width="14"
                               height="14"
                               viewBox="0 0 16 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                               className="text-[#666] hover:text-[#333]"
-                            >
-                              <path
+                  >
+                    <path
                                 d="M12 4L4 12M4 4l8 8"
                                 stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                           </button>
-                        </div>
+                  </div>
                       </>
                     )}
                   </div>
@@ -1008,7 +1023,7 @@ export default function Index() {
                           </span>
                         )}
                         {extractedData && extractedData.policy.carrier?.value && (
-                          <span className="text-sm font-semibold text-black mt-1">Proposed</span>
+                        <span className="text-sm font-semibold text-black mt-1">Proposed</span>
                         )}
                       </>
                     );
@@ -1028,7 +1043,7 @@ export default function Index() {
                 <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Policy Start Date
-                  </span>
+                        </span>
                   {extractedData && extractedData.status !== "failed" ? (
                     <>
                       <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
@@ -1043,9 +1058,9 @@ export default function Index() {
                   ) : (
                     <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                       01/01/2026
-                    </span>
-                  )}
-                </div>
+                          </span>
+                        )}
+                      </div>
                 <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Deductible
@@ -1080,20 +1095,20 @@ export default function Index() {
                             return null;
                           })()}
                         </div>
-                      </div>
+                        </div>
                       <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                         {extractedData.coverages.deductible?.value
                           ? `$${extractedData.coverages.deductible.value.toLocaleString()}`
                           : "Unknown"}
-                      </span>
+                        </span>
                     </>
                   ) : (
                     <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                       $1,000
-                    </span>
-                  )}
-                </div>
-              </div>
+                          </span>
+                        )}
+                      </div>
+                        </div>
 
               <div className="flex flex-row justify-between items-center px-3 md:px-4 py-3 md:py-2">
                 <span className="text-base font-bold leading-5 text-black">
@@ -1180,7 +1195,7 @@ export default function Index() {
                                 ? `$${currentValue.value.toLocaleString()}`
                                 : `$${currentValue.value}`
                               : "Unknown"}
-                          </span>
+                            </span>
                         </>
                       ) : (
                         <span className="text-base font-medium leading-5 text-black">
@@ -1791,9 +1806,9 @@ export default function Index() {
                         }}
                       />
                     ) : (
-                      <div className="w-[120px] h-[30px] bg-[#0A3066] flex items-center justify-center rounded">
-                        <span className="text-white font-bold text-sm">ALLSTATE</span>
-                      </div>
+              <div className="w-[120px] h-[30px] bg-[#0A3066] flex items-center justify-center rounded">
+                <span className="text-white font-bold text-sm">ALLSTATE</span>
+              </div>
                     )}
                   </>
                 );
