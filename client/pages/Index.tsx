@@ -7,6 +7,7 @@ const CARRIER_LOGOS: Record<string, string> = {
   "allstate": "https://maticinsurance.sirv.com/carriers/regular/allstate.svg",
   "foremost": "https://maticinsurance.sirv.com/carriers/regular/foremost.svg",
   "safeco": "https://maticinsurance.sirv.com/carriers/regular/safeco.svg",
+  "grange": "https://maticinsurance.sirv.com/carriers/regular/grange.svg",
 };
 
 // Helper function to extract carrier brand name from full carrier name
@@ -33,7 +34,9 @@ export default function Index() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedImages, setCapturedImages] = useState<string[]>([]);
+  const [showPhotoSelection, setShowPhotoSelection] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const carrierStickyRef = useRef<HTMLDivElement>(null);
@@ -127,7 +130,6 @@ export default function Index() {
       console.log("Camera access granted, setting up stream...");
       streamRef.current = stream;
       setIsCameraOpen(true);
-      setCapturedImage(null);
       
       // Small delay to ensure state is updated
       setTimeout(() => {
@@ -183,18 +185,27 @@ export default function Index() {
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0);
         const imageDataUrl = canvas.toDataURL('image/jpeg');
-        setCapturedImage(imageDataUrl);
-        stopCamera();
+        setCapturedImages(prev => [...prev, imageDataUrl]);
+        // Don't stop camera - allow taking more photos
       }
     }
   };
 
-  const handleCapturedImage = async () => {
-    if (!capturedImage) return;
+  const handleSelectedPhotos = async () => {
+    if (selectedPhotos.size === 0) return;
 
     try {
+      // Process selected photos in order
+      const selectedIndices = Array.from(selectedPhotos).sort((a, b) => a - b);
+      
+      // For now, process the first selected photo (can be extended to handle multiple)
+      const firstSelectedIndex = selectedIndices[0];
+      const imageDataUrl = capturedImages[firstSelectedIndex];
+      
+      if (!imageDataUrl) return;
+
       // Convert data URL to File
-      const response = await fetch(capturedImage);
+      const response = await fetch(imageDataUrl);
       const blob = await response.blob();
       const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
 
@@ -206,11 +217,27 @@ export default function Index() {
       } as React.ChangeEvent<HTMLInputElement>;
 
       await handleFileUpload(syntheticEvent);
-      setCapturedImage(null);
+      
+      // Reset after processing
+      setCapturedImages([]);
+      setSelectedPhotos(new Set());
+      setShowPhotoSelection(false);
     } catch (error) {
       console.error("Error processing captured image:", error);
       setParseError("Error processing captured image");
     }
+  };
+
+  const togglePhotoSelection = (index: number) => {
+    setSelectedPhotos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   // Cleanup camera stream when component unmounts or modal closes
@@ -224,7 +251,9 @@ export default function Index() {
         videoRef.current.srcObject = null;
       }
       setIsCameraOpen(false);
-      setCapturedImage(null);
+      setCapturedImages([]);
+      setSelectedPhotos(new Set());
+      setShowPhotoSelection(false);
     }
     return () => {
       if (streamRef.current) {
@@ -771,7 +800,7 @@ export default function Index() {
                       </div>
 
                       {/* Take Picture Option */}
-                      {!isCameraOpen && !capturedImage ? (
+                      {!isCameraOpen && capturedImages.length === 0 ? (
                         <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-6 flex flex-col items-center gap-3 cursor-pointer hover:bg-[#F9F9F9] transition-colors w-full bg-transparent"
                           onClick={(e) => {
                             e.preventDefault();
@@ -821,56 +850,33 @@ export default function Index() {
                             </p>
                           </div>
                         </div>
-                      ) : isCameraOpen ? (
+                      ) : capturedImages.length > 0 && !isCameraOpen ? (
                         <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-4 flex flex-col items-center gap-4">
-                          <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-                            <video
-                              ref={videoRef}
-                              autoPlay
-                              playsInline
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex gap-3 w-full">
-                            <button
-                              onClick={stopCamera}
-                              className="flex-1 px-3 md:px-4 py-3 md:py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={capturePhoto}
-                              className="flex-1 px-3 md:px-4 py-3 md:py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors"
-                            >
-                              Capture
-                            </button>
-                          </div>
-                        </div>
-                      ) : capturedImage ? (
-                        <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-3 md:p-4 flex flex-col items-center gap-4">
-                          <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-                            <img
-                              src={capturedImage}
-                              alt="Captured document"
-                              className="w-full h-full object-contain"
-                            />
+                          <div className="w-full text-center">
+                            <p className="text-sm font-bold text-black">
+                              {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''} captured
+                            </p>
+                            <p className="text-xs text-[#666] mt-1">
+                              Click "Select Photos" to choose which ones to use
+                            </p>
                           </div>
                           <div className="flex gap-3 w-full">
                             <button
                               onClick={() => {
-                                setCapturedImage(null);
+                                setCapturedImages([]);
+                                setSelectedPhotos(new Set());
                                 startCamera();
                               }}
                               className="flex-1 px-3 md:px-4 py-3 md:py-2 text-sm font-medium text-[#666] border border-[#D9D9D9] rounded hover:bg-[#F9F9F9] transition-colors"
                             >
-                              Retake
+                              Retake All
                             </button>
                             <button
-                              onClick={handleCapturedImage}
+                              onClick={() => setShowPhotoSelection(true)}
                               disabled={isLoading}
                               className="flex-1 px-3 md:px-4 py-3 md:py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Use This Photo
+                              Select Photos
                             </button>
                           </div>
                         </div>
@@ -887,6 +893,185 @@ export default function Index() {
                         Cancel
                       </button>
                     </Dialog.Close>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+
+            {/* Full-screen Camera Modal */}
+            <Dialog.Root open={isCameraOpen} onOpenChange={(open) => {
+              if (!open) {
+                stopCamera();
+              }
+            }}>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black z-[100]" />
+                <Dialog.Content className="fixed inset-0 z-[100] bg-black flex flex-col p-0 m-0 max-w-none w-screen h-screen rounded-none">
+                  {/* Camera Preview - Full Screen */}
+                  <div className="flex-1 relative bg-black flex items-center justify-center overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                      style={{ maxHeight: '100vh' }}
+                    />
+                    
+                    {/* Document Guide Overlay (optional - helps with A4 alignment) */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                      <div className="border-2 border-white/30 border-dashed rounded-lg" 
+                        style={{ 
+                          width: '85%', 
+                          aspectRatio: '210/297', // A4 ratio
+                          maxWidth: '600px'
+                        }}
+                      />
+                    </div>
+
+                    {/* Captured Photos Count Badge */}
+                    {capturedImages.length > 0 && (
+                      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
+                        {capturedImages.length} photo{capturedImages.length !== 1 ? 's' : ''} captured
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Controls - Fixed at Bottom */}
+                  <div className="bg-black/90 backdrop-blur-sm p-4 pb-8 safe-area-inset-bottom">
+                    <div className="flex flex-col gap-4 max-w-md mx-auto">
+                      {/* Instructions */}
+                      <div className="text-center text-white text-sm">
+                        {capturedImages.length === 0 
+                          ? 'Position the document within the frame and tap Capture'
+                          : `Page ${capturedImages.length + 1} - Capture another page or tap Done`
+                        }
+                      </div>
+
+                      {/* Control Buttons */}
+                      <div className="flex gap-4 items-center justify-center">
+                        {/* Cancel/Done Button */}
+                        <button
+                          onClick={stopCamera}
+                          className="px-6 py-3 text-white text-sm font-medium hover:bg-white/10 rounded-lg transition-colors"
+                        >
+                          {capturedImages.length > 0 ? 'Done' : 'Cancel'}
+                        </button>
+
+                        {/* Capture Button - Large Circular */}
+                        <button
+                          onClick={capturePhoto}
+                          className="w-16 h-16 rounded-full bg-white border-4 border-white/30 flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
+                          aria-label="Capture photo"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-white"></div>
+                        </button>
+
+                        {/* View Photos Button (if photos captured) */}
+                        {capturedImages.length > 0 && (
+                          <button
+                            onClick={() => {
+                              stopCamera();
+                              setShowPhotoSelection(true);
+                            }}
+                            className="px-6 py-3 text-white text-sm font-medium hover:bg-white/10 rounded-lg transition-colors"
+                          >
+                            View ({capturedImages.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+
+            {/* Full-screen Photo Selection Modal */}
+            <Dialog.Root open={showPhotoSelection} onOpenChange={setShowPhotoSelection}>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+                <Dialog.Content className="fixed inset-0 z-50 bg-white flex flex-col p-0 m-0 max-w-none w-screen h-screen rounded-none">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-[#D9D9D9]">
+                    <Dialog.Title className="text-lg font-bold text-black">
+                      Select Photos ({selectedPhotos.size} selected)
+                    </Dialog.Title>
+                    <Dialog.Close asChild>
+                      <button className="text-[#666] hover:text-black p-2">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </Dialog.Close>
+                  </div>
+
+                  {/* Photos Grid - Full Screen */}
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-7xl mx-auto">
+                      {capturedImages.map((image, index) => (
+                        <div
+                          key={index}
+                          className={`relative aspect-video bg-black rounded-lg overflow-hidden cursor-pointer border-4 transition-all ${
+                            selectedPhotos.has(index)
+                              ? 'border-[#156EEA] ring-4 ring-[#156EEA]/20'
+                              : 'border-transparent hover:border-[#D9D9D9]'
+                          }`}
+                          onClick={() => togglePhotoSelection(index)}
+                        >
+                          <img
+                            src={image}
+                            alt={`Captured photo ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                          {/* Selection Checkbox */}
+                          <div className="absolute top-2 right-2">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              selectedPhotos.has(index)
+                                ? 'bg-[#156EEA]'
+                                : 'bg-white/80'
+                            }`}>
+                              {selectedPhotos.has(index) && (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                          {/* Photo Number */}
+                          <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded">
+                            Photo {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="border-t border-[#D9D9D9] p-4 flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        setCapturedImages([]);
+                        setSelectedPhotos(new Set());
+                        setShowPhotoSelection(false);
+                        startCamera();
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-[#666] hover:text-black"
+                    >
+                      Retake All
+                    </button>
+                    <div className="flex gap-3">
+                      <Dialog.Close asChild>
+                        <button className="px-4 py-2 text-sm font-medium text-[#666] hover:text-black">
+                          Cancel
+                        </button>
+                      </Dialog.Close>
+                      <button
+                        onClick={handleSelectedPhotos}
+                        disabled={selectedPhotos.size === 0 || isLoading}
+                        className="px-4 py-2 bg-[#156EEA] text-white text-sm font-bold rounded hover:bg-[#1257c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Use {selectedPhotos.size > 0 ? `${selectedPhotos.size} ` : ''}Photo{selectedPhotos.size !== 1 ? 's' : ''}
+                      </button>
+                    </div>
                   </div>
                 </Dialog.Content>
               </Dialog.Portal>
@@ -932,8 +1117,10 @@ export default function Index() {
                                 const parent = target.parentElement;
                                 if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                   const span = document.createElement('span');
-                                  span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base text-right whitespace-nowrap';
+                                  span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base text-right truncate';
+                                  span.style.maxWidth = '104px';
                                   span.textContent = 'FOREMOST';
+                                  span.title = 'FOREMOST';
                                   parent.insertBefore(span, parent.firstChild);
                                 }
                               }}
@@ -971,7 +1158,8 @@ export default function Index() {
                                   const parent = target.parentElement;
                                   if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                     const span = document.createElement('span');
-                                    span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base truncate block w-full text-right min-w-0';
+                                    span.className = 'carrier-text-fallback text-black font-bold text-sm md:text-base truncate block text-right min-w-0';
+                                    span.style.maxWidth = '104px';
                                     span.textContent = displayName || 'Unknown';
                                     span.title = displayName || 'Unknown';
                                     parent.insertBefore(span, parent.firstChild);
@@ -980,8 +1168,9 @@ export default function Index() {
                               />
                             ) : (
                               <span 
-                                className="text-black font-bold text-sm md:text-base truncate block w-full text-right min-w-0 overflow-hidden" 
+                                className="text-black font-bold text-sm md:text-base truncate block text-right min-w-0 overflow-hidden max-w-[104px]" 
                                 title={displayName}
+                                style={{ maxWidth: '104px' }}
                               >
                                 {displayName}
                               </span>
@@ -1072,7 +1261,8 @@ export default function Index() {
                               const parent = target.parentElement;
                               if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                 const span = document.createElement('span');
-                                span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full';
+                                span.className = 'carrier-text-fallback text-black font-bold text-base truncate block';
+                                span.style.maxWidth = '104px';
                                 span.textContent = displayName;
                                 span.title = displayName;
                                 parent.insertBefore(span, parent.firstChild);
