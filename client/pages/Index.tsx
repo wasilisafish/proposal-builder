@@ -1061,7 +1061,7 @@ export default function Index() {
                           </span>
                         )}
                       </div>
-                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(120px, 160px) minmax(120px, 160px)' } : {}}>
+                <div className={`${extractedData && extractedData.status !== "failed" ? "flex flex-row justify-between md:grid gap-2 md:gap-4" : "flex flex-row justify-between"} items-start px-3 md:px-4 py-3 md:py-3 bg-[#F2F2F2]`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)' } : {}}>
                   <span className="text-base font-normal md:font-medium leading-5 text-black">
                     Deductible
                   </span>
