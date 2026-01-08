@@ -1719,7 +1719,7 @@ export default function Index() {
               {extractedData && extractedData.status !== "failed" && !isLoading ? (
                 <>
                   <div className="flex items-center justify-start md:justify-end gap-2">
-                    <span className="text-xl md:text-2xl font-bold leading-8 text-left md:text-right text-[#111827] flex-1">
+                    <span className="text-xl md:text-2xl font-bold leading-8 text-left md:text-right text-[#111827] flex-1" style={{ fontSize: '1.2rem' }}>
                       $1,677.00
                     </span>
                     <div className="flex-shrink-0 w-5">
@@ -1758,7 +1758,7 @@ export default function Index() {
                   </span>
                 </>
               ) : (
-              <span className="text-2xl font-bold leading-8 text-[#111827]">
+              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]" style={{ fontSize: '1.2rem' }}>
                   $1,677.00
               </span>
               )}
@@ -1868,7 +1868,7 @@ export default function Index() {
               <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]" style={{ fontSize: '1.2rem' }}>
                 Yearly premium
               </span>
-              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]">
+              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]" style={{ fontSize: '1.2rem' }}>
                 $1,234.00
               </span>
             </div>
