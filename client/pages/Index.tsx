@@ -1746,7 +1746,7 @@ export default function Index() {
                       })()}
                     </div>
                   </div>
-                  <span className="text-2xl font-bold leading-8 text-[#111827] text-left md:text-right">
+                  <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827] text-left md:text-right" style={{ fontSize: '1.2rem' }}>
                     {extractedData.policy.premium?.value
                       ? typeof extractedData.policy.premium.value === "number"
                         ? `$${extractedData.policy.premium.value.toLocaleString("en-US", {
