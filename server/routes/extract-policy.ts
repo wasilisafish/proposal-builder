@@ -5,6 +5,7 @@ import { writeFile, readFile, unlink, mkdir, readdir, rmdir } from "fs/promises"
 import { join } from "path";
 import { tmpdir } from "os";
 import { execSync } from "child_process";
+import { existsSync } from "fs";
 
 const require = createRequire(import.meta.url);
 
@@ -58,9 +59,35 @@ async function convertPDFToImages(buffer: Buffer): Promise<string[]> {
     await writeFile(pdfPath, buffer);
     await mkdir(outputDir, { recursive: true });
 
+    // Find pdftocairo - check common locations and PATH
+    let pdftocairoPath = "pdftocairo";
+    const possiblePaths = [
+      "/usr/bin/pdftocairo",
+      "/usr/local/bin/pdftocairo",
+      "/nix/store/*/bin/pdftocairo",
+      "pdftocairo", // fallback to PATH
+    ];
+    
+    // Try to find pdftocairo in common locations
+    for (const path of possiblePaths) {
+      try {
+        if (path.includes("*")) {
+          // For nix store paths, try execSync to check if command exists
+          execSync(`which pdftocairo`, { stdio: "pipe" });
+          pdftocairoPath = "pdftocairo";
+          break;
+        } else if (existsSync(path)) {
+          pdftocairoPath = path;
+          break;
+        }
+      } catch {
+        continue;
+      }
+    }
+
     // Use system pdftocairo directly (more reliable)
     const outputPrefix = join(outputDir, "page");
-    execSync(`pdftocairo -png -scale-to 2048 "${pdfPath}" "${outputPrefix}"`, {
+    execSync(`${pdftocairoPath} -png -scale-to 2048 "${pdfPath}" "${outputPrefix}"`, {
       stdio: "pipe",
     });
 
