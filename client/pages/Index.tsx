@@ -1696,7 +1696,7 @@ export default function Index() {
             {/* Yearly Premium - Show comparison if data available */}
             <div className={`${extractedData && extractedData.status !== "failed" ? "grid gap-2 md:gap-4" : "flex flex-col md:flex-row items-start gap-1 justify-between"} items-start px-3 md:px-4 py-3 md:py-3`} style={extractedData && extractedData.status !== "failed" ? { gridTemplateColumns: 'minmax(0, 1fr) minmax(80px, 1fr) minmax(80px, 1fr)', display: 'grid' } : {}}>
               <div className="flex flex-col gap-1 mb-2 md:mb-0">
-              <span className="text-2xl font-bold leading-8 text-[#111827]">
+              <span className="text-xl md:text-2xl font-bold leading-8 text-[#111827]" style={{ fontSize: '1.2rem' }}>
                 Yearly premium
               </span>
                 {extractedData && extractedData.status !== "failed" && !isLoading && (() => {
@@ -1719,7 +1719,7 @@ export default function Index() {
               {extractedData && extractedData.status !== "failed" && !isLoading ? (
                 <>
                   <div className="flex items-center justify-start md:justify-end gap-2">
-                    <span className="text-2xl font-bold leading-8 text-left md:text-right text-[#111827] flex-1">
+                    <span className="text-xl md:text-2xl font-bold leading-8 text-left md:text-right text-[#111827] flex-1">
                       $1,677.00
                     </span>
                     <div className="flex-shrink-0 w-5">
