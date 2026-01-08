@@ -45,15 +45,24 @@ export async function parseDocument(file: File): Promise<ExtractionResponse> {
       body: formData,
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("API error response:", response.status, errorText);
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
+    }
+
     const result: ExtractionResponse = await response.json();
+    console.log("API response:", result);
 
     if (result.status === "failed" && result.error) {
+      console.error("Extraction failed:", result.error);
       throw new Error(result.error);
     }
 
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    console.error("Parse document error:", error);
     throw new Error(`Failed to parse document: ${message}`);
   }
 }

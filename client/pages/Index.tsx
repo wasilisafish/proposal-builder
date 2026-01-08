@@ -55,26 +55,29 @@ export default function Index() {
 
     try {
       const response = await parsePDF(file);
-      setExtractedData(response);
-      setLastUpdated(
-        new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-
-      // Don't show error messages to user - just set data or leave as null
+      console.log("Parse response:", response);
+      
       if (response.status === "failed") {
-        setParseError(null); // Don't show errors to user
+        const errorMsg = response.error || "Failed to extract policy data";
+        console.error("Extraction failed:", errorMsg);
+        setParseError(errorMsg);
         setExtractedData(null);
       } else {
+        setExtractedData(response);
         setParseError(null);
+        setLastUpdated(
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        );
         // Close modal after successful extraction
         setModalOpen(false);
       }
     } catch (error) {
-      // Don't show error messages to user - silently fail
-      setParseError(null);
+      const errorMsg = error instanceof Error ? error.message : "Failed to upload and analyze PDF";
+      console.error("Upload error:", error);
+      setParseError(errorMsg);
       setExtractedData(null);
     } finally {
       setIsLoading(false);
@@ -625,6 +628,12 @@ export default function Index() {
                     the data to show you a side-by-side comparison with the proposed policy.
                   </Dialog.Description>
 
+                  {parseError && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600 font-medium">Error: {parseError}</p>
+                    </div>
+                  )}
+
                   {isLoading ? (
                     <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-2 border-[#156EEA] border-t-transparent rounded-full animate-spin"></div>
@@ -826,7 +835,7 @@ export default function Index() {
               {extractedData && extractedData.status !== "failed" ? (
                 <>
                   {/* Proposed Carrier */}
-                  <div className="flex flex-col items-start">
+                  <div className="flex flex-col items-end">
                     {(() => {
                       const carrierName = "foremost";
                       const logoUrl = CARRIER_LOGOS[carrierName];
@@ -837,29 +846,29 @@ export default function Index() {
                             <img 
                               src={logoUrl} 
                               alt="FOREMOST"
-                              className="max-h-[24px] object-contain mb-1"
+                              className="max-h-[24px] object-contain mb-1 ml-auto"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                                 const parent = target.parentElement;
                                 if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                   const span = document.createElement('span');
-                                  span.className = 'carrier-text-fallback text-black font-bold text-base';
+                                  span.className = 'carrier-text-fallback text-black font-bold text-base text-right';
                                   span.textContent = 'FOREMOST';
                                   parent.insertBefore(span, parent.firstChild);
                                 }
                               }}
                             />
                           ) : (
-                            <span className="text-black font-bold text-base">FOREMOST</span>
+                            <span className="text-black font-bold text-base text-right">FOREMOST</span>
                           )}
-                          <span className="text-sm font-semibold text-black mt-1">Proposed</span>
+                          <span className="text-sm font-semibold text-black mt-1 text-right">Proposed</span>
                         </>
                       );
                     })()}
                 </div>
                   {/* Current Carrier - with delete on hover */}
-                  <div className="flex flex-col items-start group relative">
+                  <div className="flex flex-col items-end group relative">
                     {extractedData.policy.carrier?.value ? (
                       (() => {
                         const carrierName = String(extractedData.policy.carrier.value).toLowerCase().trim();
@@ -872,7 +881,7 @@ export default function Index() {
                               <img 
                                 src={logoUrl} 
                                 alt={displayName}
-                                className="max-h-[24px] object-contain mb-1"
+                                className="max-h-[24px] object-contain mb-1 ml-auto"
                                 title={displayName}
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -880,7 +889,7 @@ export default function Index() {
                                   const parent = target.parentElement;
                                   if (parent && !parent.querySelector('.carrier-text-fallback')) {
                                     const span = document.createElement('span');
-                                    span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full';
+                                    span.className = 'carrier-text-fallback text-black font-bold text-base truncate block w-full text-right';
                                     span.textContent = displayName || 'Unknown';
                                     span.title = displayName || 'Unknown';
                                     parent.insertBefore(span, parent.firstChild);
@@ -889,14 +898,14 @@ export default function Index() {
                               />
                             ) : (
                               <span 
-                                className="text-black font-bold text-base truncate block w-full" 
+                                className="text-black font-bold text-base truncate block w-full text-right" 
                                 title={displayName}
                               >
                                 {displayName}
                               </span>
                             )}
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-sm font-semibold text-black">Current</span>
+                            <div className="flex items-center justify-end gap-2 mt-1 w-full">
+                              <span className="text-sm font-semibold text-black text-right">Current</span>
                               <button
                                 onClick={handleDeletePolicy}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -926,13 +935,13 @@ export default function Index() {
                     ) : (
                       <>
                         <span 
-                          className="text-black font-bold text-base truncate block w-full" 
+                          className="text-black font-bold text-base truncate block w-full text-right" 
                           title="Unknown"
                         >
                           Unknown
                         </span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-semibold text-black">Current</span>
+                        <div className="flex items-center justify-end gap-2 mt-1 w-full">
+                          <span className="text-sm font-semibold text-black text-right">Current</span>
                     <button
                             onClick={handleDeletePolicy}
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1049,17 +1058,17 @@ export default function Index() {
                             const currentDeductible = getNumericValue(extractedData.coverages.deductible);
                             if (currentDeductible !== null) {
                               if (proposedDeductible > currentDeductible) {
-                                // Proposed higher - red up arrow
+                                // Proposed higher - trending up
                                 return (
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M8 4L12 10H4L8 4Z" fill="#EF4444" />
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M16 8C15.4477 8 15 7.55228 15 7C15 6.44772 15.4477 6 16 6H22C22.5523 6 23 6.44772 23 7V13C23 13.5523 22.5523 14 22 14C21.4477 14 21 13.5523 21 13V9.41421L14.2071 16.2071C13.8166 16.5976 13.1834 16.5976 12.7929 16.2071L8.5 11.9142L2.70711 17.7071C2.31658 18.0976 1.68342 18.0976 1.29289 17.7071C0.902369 17.3166 0.902369 16.6834 1.29289 16.2929L7.79289 9.79289C8.18342 9.40237 8.81658 9.40237 9.20711 9.79289L13.5 14.0858L19.5858 8H16Z" fill="#EF4444"/>
                                   </svg>
                                 );
                               } else if (proposedDeductible < currentDeductible) {
-                                // Proposed cheaper - green down arrow
+                                // Proposed cheaper - trending down
                                 return (
-                                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M8 12L4 6H12L8 12Z" fill="#10B981" />
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M1.29289 6.29289C1.68342 5.90237 2.31658 5.90237 2.70711 6.29289L8.5 12.0858L12.7929 7.79289C13.1834 7.40237 13.8166 7.40237 14.2071 7.79289L21 14.5858V11C21 10.4477 21.4477 10 22 10C22.5523 10 23 10.4477 23 11V17C23 17.5523 22.5523 18 22 18H16C15.4477 18 15 17.5523 15 17C15 16.4477 15.4477 16 16 16H19.5858L13.5 9.91421L9.20711 14.2071C8.81658 14.5976 8.18342 14.5976 7.79289 14.2071L1.29289 7.70711C0.902369 7.31658 0.902369 6.68342 1.29289 6.29289Z" fill="#10B981"/>
                                   </svg>
                                 );
                               }
@@ -1143,17 +1152,17 @@ export default function Index() {
                               {(() => {
                                 const currentNum = getNumericValue(currentValue);
                                 if (currentNum !== null && item.value > currentNum) {
-                                  // Proposed higher - green up arrow
+                                  // Proposed higher - trending up
                                   return (
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M8 4L12 10H4L8 4Z" fill="#10B981" />
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path fillRule="evenodd" clipRule="evenodd" d="M16 8C15.4477 8 15 7.55228 15 7C15 6.44772 15.4477 6 16 6H22C22.5523 6 23 6.44772 23 7V13C23 13.5523 22.5523 14 22 14C21.4477 14 21 13.5523 21 13V9.41421L14.2071 16.2071C13.8166 16.5976 13.1834 16.5976 12.7929 16.2071L8.5 11.9142L2.70711 17.7071C2.31658 18.0976 1.68342 18.0976 1.29289 17.7071C0.902369 17.3166 0.902369 16.6834 1.29289 16.2929L7.79289 9.79289C8.18342 9.40237 8.81658 9.40237 9.20711 9.79289L13.5 14.0858L19.5858 8H16Z" fill="#10B981"/>
                                     </svg>
                                   );
                                 } else if (currentNum !== null && item.value < currentNum) {
-                                  // Proposed lower - orange down arrow
+                                  // Proposed lower - trending down
                                   return (
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M8 12L4 6H12L8 12Z" fill="#F97316" />
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path fillRule="evenodd" clipRule="evenodd" d="M1.29289 6.29289C1.68342 5.90237 2.31658 5.90237 2.70711 6.29289L8.5 12.0858L12.7929 7.79289C13.1834 7.40237 13.8166 7.40237 14.2071 7.79289L21 14.5858V11C21 10.4477 21.4477 10 22 10C22.5523 10 23 10.4477 23 11V17C23 17.5523 22.5523 18 22 18H16C15.4477 18 15 17.5523 15 17C15 16.4477 15.4477 16 16 16H19.5858L13.5 9.91421L9.20711 14.2071C8.81658 14.5976 8.18342 14.5976 7.79289 14.2071L1.29289 7.70711C0.902369 7.31658 0.902369 6.68342 1.29289 6.29289Z" fill="#F97316"/>
                                     </svg>
                                   );
                                 }
@@ -1276,17 +1285,17 @@ export default function Index() {
                                 // If both have numeric values, compare amounts
                                 if (proposedValue !== null && typeof proposedValue === "number" && currentNum !== null) {
                                   if (proposedValue < currentNum) {
-                                    // Proposed lower - red down arrow
+                                    // Proposed lower - trending down
                                     return (
-                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
-                                        <path d="M8 12L4 6H12L8 12Z" fill="#EF4444" />
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M1.29289 6.29289C1.68342 5.90237 2.31658 5.90237 2.70711 6.29289L8.5 12.0858L12.7929 7.79289C13.1834 7.40237 13.8166 7.40237 14.2071 7.79289L21 14.5858V11C21 10.4477 21.4477 10 22 10C22.5523 10 23 10.4477 23 11V17C23 17.5523 22.5523 18 22 18H16C15.4477 18 15 17.5523 15 17C15 16.4477 15.4477 16 16 16H19.5858L13.5 9.91421L9.20711 14.2071C8.81658 14.5976 8.18342 14.5976 7.79289 14.2071L1.29289 7.70711C0.902369 7.31658 0.902369 6.68342 1.29289 6.29289Z" fill="#EF4444"/>
                                       </svg>
                                     );
                                   } else if (proposedValue > currentNum) {
-                                    // Proposed higher - green up arrow
+                                    // Proposed higher - trending up
                                     return (
-                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
-                                        <path d="M8 4L12 10H4L8 4Z" fill="#10B981" />
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 flex-shrink-0">
+                                        <path fillRule="evenodd" clipRule="evenodd" d="M16 8C15.4477 8 15 7.55228 15 7C15 6.44772 15.4477 6 16 6H22C22.5523 6 23 6.44772 23 7V13C23 13.5523 22.5523 14 22 14C21.4477 14 21 13.5523 21 13V9.41421L14.2071 16.2071C13.8166 16.5976 13.1834 16.5976 12.7929 16.2071L8.5 11.9142L2.70711 17.7071C2.31658 18.0976 1.68342 18.0976 1.29289 17.7071C0.902369 17.3166 0.902369 16.6834 1.29289 16.2929L7.79289 9.79289C8.18342 9.40237 8.81658 9.40237 9.20711 9.79289L13.5 14.0858L19.5858 8H16Z" fill="#10B981"/>
                                       </svg>
                                     );
                                   }
@@ -1339,7 +1348,7 @@ export default function Index() {
                             </span>
                         </>
                       ) : (
-                        <span className={`text-base font-medium leading-5 min-w-[160px] ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
+                        <span className={`text-base font-medium leading-5 min-w-[160px] text-right ${item.isIncluded ? "text-black" : "text-[#666]"}`}>
                           {item.isIncluded ? `$${item.value?.toLocaleString()}` : "Not Included"}
                             </span>
                       )}
@@ -1678,7 +1687,7 @@ export default function Index() {
                       <span className={`text-sm font-semibold ${
                         difference.isCheaper ? "text-[#10B981]" : "text-[#F97316]"
                       }`}>
-                        Savings: ${difference.amount.toLocaleString("en-US", {
+                        {difference.isCheaper ? "Savings" : "Premium difference"}: ${difference.amount.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1699,17 +1708,17 @@ export default function Index() {
                         const difference = calculatePremiumDifference();
                         if (difference) {
                           if (difference.isCheaper) {
-                            // Proposed cheaper - green down arrow
+                            // Proposed cheaper - trending down
                             return (
-                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 12L4 6H12L8 12Z" fill="#10B981" />
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M1.29289 6.29289C1.68342 5.90237 2.31658 5.90237 2.70711 6.29289L8.5 12.0858L12.7929 7.79289C13.1834 7.40237 13.8166 7.40237 14.2071 7.79289L21 14.5858V11C21 10.4477 21.4477 10 22 10C22.5523 10 23 10.4477 23 11V17C23 17.5523 22.5523 18 22 18H16C15.4477 18 15 17.5523 15 17C15 16.4477 15.4477 16 16 16H19.5858L13.5 9.91421L9.20711 14.2071C8.81658 14.5976 8.18342 14.5976 7.79289 14.2071L1.29289 7.70711C0.902369 7.31658 0.902369 6.68342 1.29289 6.29289Z" fill="#10B981"/>
                               </svg>
                             );
                           } else {
-                            // Proposed more expensive - orange up arrow
+                            // Proposed more expensive - trending up
                             return (
-                              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8 4L12 10H4L8 4Z" fill="#F97316" />
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M16 8C15.4477 8 15 7.55228 15 7C15 6.44772 15.4477 6 16 6H22C22.5523 6 23 6.44772 23 7V13C23 13.5523 22.5523 14 22 14C21.4477 14 21 13.5523 21 13V9.41421L14.2071 16.2071C13.8166 16.5976 13.1834 16.5976 12.7929 16.2071L8.5 11.9142L2.70711 17.7071C2.31658 18.0976 1.68342 18.0976 1.29289 17.7071C0.902369 17.3166 0.902369 16.6834 1.29289 16.2929L7.79289 9.79289C8.18342 9.40237 8.81658 9.40237 9.20711 9.79289L13.5 14.0858L19.5858 8H16Z" fill="#F97316"/>
                               </svg>
                             );
                           }
