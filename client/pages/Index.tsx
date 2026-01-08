@@ -24,6 +24,138 @@ function getCarrierBrandName(fullName: string): string {
   return normalized;
 }
 
+// Editable Value Component
+function EditableValue({
+  value,
+  onSave,
+  displayValue,
+  className = "",
+  style,
+  type = "text",
+  placeholder = "Unknown",
+}: {
+  value: string | number | null | undefined;
+  onSave: (newValue: string | number | null) => void;
+  displayValue?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  type?: "text" | "currency" | "date";
+  placeholder?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const formatDisplayValue = () => {
+    if (displayValue !== undefined) return displayValue;
+    if (value === null || value === undefined) return placeholder;
+    
+    if (type === "currency") {
+      if (typeof value === "number") {
+        return `$${value.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
+      }
+      return `$${value}`;
+    }
+    
+    if (type === "date") {
+      return String(value);
+    }
+    
+    if (typeof value === "number") {
+      return `$${value.toLocaleString()}`;
+    }
+    
+    return String(value);
+  };
+
+  const handleClick = () => {
+    if (type === "currency" || (typeof value === "number" && type === "text")) {
+      // For currency/number, remove $ and commas for editing
+      const numValue = typeof value === "number" ? value : 
+        typeof value === "string" ? parseFloat(value.replace(/[$,]/g, "")) : null;
+      setEditValue(numValue !== null && !isNaN(numValue) ? numValue.toString() : "");
+    } else {
+      setEditValue(value !== null && value !== undefined ? String(value) : "");
+    }
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    if (editValue.trim() === "") {
+      onSave(null);
+    } else if (type === "currency" || (typeof value === "number" && type === "text")) {
+      const numValue = parseFloat(editValue.replace(/[$,]/g, ""));
+      if (!isNaN(numValue)) {
+        onSave(numValue);
+      } else {
+        onSave(editValue);
+      }
+    } else {
+      onSave(editValue);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave();
+    } else if (e.key === "Escape") {
+      setIsEditing(false);
+      setEditValue("");
+    }
+  };
+
+  const handleBlur = () => {
+    handleSave();
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`${className} border border-[#156EEA] rounded px-2 py-1 bg-white text-black`}
+        style={{ minWidth: "80px" }}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={handleClick}
+      className={`${className} cursor-pointer hover:bg-[#EFF6FF] rounded px-1 py-0.5 transition-all duration-150 ease-in-out`}
+      style={{
+        ...style,
+        border: '1px solid transparent',
+        display: 'inline-block',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = '#156EEA';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'transparent';
+      }}
+      title="Click to edit"
+    >
+      {formatDisplayValue()}
+    </span>
+  );
+}
+
 export default function Index() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractionResponse | null>(
@@ -37,6 +169,7 @@ export default function Index() {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [showPhotoSelection, setShowPhotoSelection] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<number>>(new Set());
+  const [editedValues, setEditedValues] = useState<Record<string, string | number | null>>({});
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const carrierStickyRef = useRef<HTMLDivElement>(null);
@@ -113,6 +246,23 @@ export default function Index() {
     setUploadedFile(null);
     setLastUpdated(null);
     setParseError(null);
+    setEditedValues({});
+  };
+
+  // Helper to get value (edited or extracted)
+  const getCurrentValue = (field: string, extractedValue: any): string | number | null => {
+    if (editedValues[field] !== undefined) {
+      return editedValues[field];
+    }
+    return extractedValue?.value ?? null;
+  };
+
+  // Helper to save edited value
+  const saveEditedValue = (field: string, value: string | number | null) => {
+    setEditedValues(prev => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   // Camera functions
@@ -411,13 +561,27 @@ export default function Index() {
     };
   }, [extractedData]);
 
+  // Helper to get numeric value considering edited values
+  const getNumericValueWithEdits = (field: string, fieldValue: { value: string | number | null; confidence: number } | undefined): number | null => {
+    // Check if there's an edited value
+    if (editedValues[field] !== undefined) {
+      const editedVal = editedValues[field];
+      if (editedVal === null) return null;
+      if (typeof editedVal === "number") return editedVal;
+      const parsed = parseFloat(String(editedVal).replace(/[$,]/g, ""));
+      return isNaN(parsed) ? null : parsed;
+    }
+    // Fall back to extracted value
+    return getNumericValue(fieldValue);
+  };
+
   // Calculate premium difference compared to current policy
   const calculatePremiumDifference = (): { amount: number; isCheaper: boolean } | null => {
-    if (!extractedData || extractedData.status === "failed" || !extractedData.policy.premium?.value) {
+    if (!extractedData || extractedData.status === "failed") {
       return null;
     }
     const proposedPremium = 1677.00;
-    const currentPremium = getNumericValue(extractedData.policy.premium);
+    const currentPremium = getNumericValueWithEdits("premium", extractedData.policy.premium);
     if (currentPremium === null) return null;
     
     // Calculate difference: positive means proposed is more expensive, negative means cheaper
@@ -1365,11 +1529,15 @@ export default function Index() {
                       <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
                         01/01/2026
                       </span>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
-                        {extractedData.policy.effectiveDate?.value 
-                          ? normalizeDate(extractedData.policy.effectiveDate.value)
-                          : "Unknown"}
-                      </span>
+                      <EditableValue
+                        value={getCurrentValue("effectiveDate", extractedData.policy.effectiveDate)}
+                        onSave={(val) => saveEditedValue("effectiveDate", val)}
+                        displayValue={getCurrentValue("effectiveDate", extractedData.policy.effectiveDate) 
+                          ? normalizeDate(String(getCurrentValue("effectiveDate", extractedData.policy.effectiveDate)))
+                          : undefined}
+                        className="text-base font-normal md:font-medium leading-5 text-black text-right"
+                        type="date"
+                      />
                     </>
                   ) : (
                     <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
@@ -1390,7 +1558,7 @@ export default function Index() {
                         <div className="flex-shrink-0 w-4">
                           {(() => {
                             const proposedDeductible = 1000;
-                            const currentDeductible = getNumericValue(extractedData.coverages.deductible);
+                            const currentDeductible = getNumericValueWithEdits("deductible", extractedData.coverages.deductible);
                             if (currentDeductible !== null) {
                               if (proposedDeductible > currentDeductible) {
                                 // Proposed higher - trending up
@@ -1412,11 +1580,12 @@ export default function Index() {
                           })()}
                         </div>
                         </div>
-                      <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
-                        {extractedData.coverages.deductible?.value
-                          ? `$${extractedData.coverages.deductible.value.toLocaleString()}`
-                          : "Unknown"}
-                        </span>
+                      <EditableValue
+                        value={getCurrentValue("deductible", extractedData.coverages.deductible)}
+                        onSave={(val) => saveEditedValue("deductible", val)}
+                        className="text-base font-normal md:font-medium leading-5 text-black text-right"
+                        type="currency"
+                      />
                     </>
                   ) : (
                     <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
@@ -1485,7 +1654,7 @@ export default function Index() {
                               </span>
                             <div className="flex-shrink-0 w-4">
                               {(() => {
-                                const currentNum = getNumericValue(currentValue);
+                                const currentNum = getNumericValueWithEdits(item.key, currentValue);
                                 if (currentNum !== null && item.value > currentNum) {
                                   // Proposed higher - trending up
                                   return (
@@ -1505,18 +1674,17 @@ export default function Index() {
                               })()}
                           </div>
                           </div>
-                          <span className="text-base font-normal md:font-medium leading-5 text-black text-right">
-                            {currentValue?.value
-                              ? typeof currentValue.value === "number"
-                                ? `$${currentValue.value.toLocaleString()}`
-                                : `$${currentValue.value}`
-                              : "Unknown"}
-                            </span>
+                          <EditableValue
+                            value={getCurrentValue(item.key, currentValue)}
+                            onSave={(val) => saveEditedValue(item.key, val)}
+                            className="text-base font-normal md:font-medium leading-5 text-black text-right"
+                            type="currency"
+                          />
                         </>
                       ) : (
                         <span className="text-base font-medium leading-5 text-black">
                           ${item.value.toLocaleString()}
-                            </span>
+                        </span>
                       )}
                         </div>
                       );
@@ -1612,10 +1780,11 @@ export default function Index() {
                                   return null;
                                 }
                                 
-                                const currentIsIncluded = currentValue?.value && typeof currentValue.value === "number";
-                                const currentIsUnknown = !currentValue?.value || currentValue.value === "Unknown";
+                                const currentVal = getCurrentValue(item.key, currentValue);
+                                const currentIsIncluded = currentVal !== null && typeof currentVal === "number";
+                                const currentIsUnknown = currentVal === null || currentVal === "Unknown";
                                 const proposedValue = item.isIncluded ? item.value : null;
-                                const currentNum = getNumericValue(currentValue);
+                                const currentNum = getNumericValueWithEdits(item.key, currentValue);
                                 
                                 // If both have numeric values, compare amounts
                                 if (proposedValue !== null && typeof proposedValue === "number" && currentNum !== null) {
@@ -1662,24 +1831,33 @@ export default function Index() {
                               if (isExcluded) {
                                 return "text-[#666]";
                               }
-                              const currentIsIncluded = currentValue?.value && typeof currentValue.value === "number";
-                              const currentIsUnknown = !currentValue?.value || currentValue.value === "Unknown";
+                              const currentVal = getCurrentValue(item.key, currentValue);
+                              const currentIsIncluded = currentVal !== null && typeof currentVal === "number";
+                              const currentIsUnknown = currentVal === null || currentVal === "Unknown";
                               
                               if (currentIsUnknown) {
                                 return "text-black"; // Black: unknown
                               }
-                              return currentValue?.value && typeof currentValue.value === "number" ? "text-black" : "text-[#666]";
+                              return currentVal !== null && typeof currentVal === "number" ? "text-black" : "text-[#666]";
                             })()
                           }`}>
-                            {isExcluded 
-                              ? "Not Included"
-                              : currentValue?.value
-                                ? typeof currentValue.value === "number"
-                                  ? `$${currentValue.value.toLocaleString()}`
-                                  : currentValue.value === null || currentValue.value === "Not Included"
-                                    ? "Not Included"
-                                    : `$${currentValue.value}`
-                                : "Unknown"}
+                            {isExcluded ? (
+                              "Not Included"
+                            ) : (
+                              <EditableValue
+                                value={getCurrentValue(item.key, currentValue)}
+                                onSave={(val) => saveEditedValue(item.key, val)}
+                                displayValue={(() => {
+                                  const val = getCurrentValue(item.key, currentValue);
+                                  if (val === null) return "Unknown";
+                                  if (typeof val === "number") return `$${val.toLocaleString()}`;
+                                  if (val === "Not Included") return "Not Included";
+                                  return `$${val}`;
+                                })()}
+                                className="text-base font-normal md:font-medium leading-5 text-black text-right"
+                                type="currency"
+                              />
+                            )}
                             </span>
                         </>
                       ) : (
@@ -2062,16 +2240,13 @@ export default function Index() {
                       })()}
                     </div>
                   </div>
-                  <span className="text-xl md:text-2xl font-bold leading-8 text-right text-[#111827]" style={{ fontSize: '1.2rem' }}>
-                    {extractedData.policy.premium?.value
-                      ? typeof extractedData.policy.premium.value === "number"
-                        ? `$${extractedData.policy.premium.value.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}`
-                        : `$${extractedData.policy.premium.value}`
-                      : "Unknown"}
-                  </span>
+                  <EditableValue
+                    value={getCurrentValue("premium", extractedData.policy.premium)}
+                    onSave={(val) => saveEditedValue("premium", val)}
+                    className="text-xl md:text-2xl font-bold leading-8 text-right text-[#111827]"
+                    style={{ fontSize: '1.2rem' }}
+                    type="currency"
+                  />
                 </>
               ) : (
               <span className="text-xl md:text-2xl font-bold leading-8 text-right text-[#111827]" style={{ fontSize: '1.2rem' }}>
